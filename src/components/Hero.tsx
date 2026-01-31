@@ -1,7 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Play, Shield, TrendingUp, Award } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Hero = () => {
+  const navigate = useNavigate();
+
   return (
     <section className="relative pt-24 lg:pt-32 pb-16 lg:pb-24 gradient-hero overflow-hidden">
       {/* Background Elements */}
@@ -33,7 +36,11 @@ const Hero = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 animate-fade-up" style={{ animationDelay: '0.3s' }}>
-            <Button size="lg" className="gradient-bg font-semibold shadow-medium hover:shadow-strong transition-all px-8 h-14 text-base group">
+            <Button 
+              size="lg" 
+              className="gradient-bg font-semibold shadow-medium hover:shadow-strong transition-all px-8 h-14 text-base group"
+              onClick={() => navigate("/auth")}
+            >
               Começar Agora
               <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
             </Button>
