@@ -1,4 +1,15 @@
-# Welcome to your Lovable project
+# TotalQuality - Sistema de Gestão da Qualidade
+
+> Plataforma SaaS completa para gerenciamento de qualidade, processos e conformidade ISO.
+
+## 📚 Documentação Completa
+
+Para análise detalhada do projeto, arquitetura e roadmap, consulte:
+
+- **[ANALISE_PROJETO.md](./ANALISE_PROJETO.md)** - Análise completa em Português 🇧🇷
+- **[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)** - Documentação de arquitetura 🏗️
+- **[docs/ROADMAP.md](./docs/ROADMAP.md)** - Roadmap de desenvolvimento 🗺️
+- **[docs/README.md](./docs/README.md)** - Índice da documentação 📖
 
 ## Project info
 
