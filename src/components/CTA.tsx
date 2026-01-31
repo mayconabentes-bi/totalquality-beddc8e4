@@ -1,7 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const CTA = () => {
+  const navigate = useNavigate();
+
   return (
     <section id="contact" className="py-20 lg:py-28 bg-muted/30">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -28,7 +31,11 @@ const CTA = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button size="lg" className="gradient-bg font-semibold shadow-medium hover:shadow-strong transition-all px-10 h-14 text-base group">
+              <Button 
+                size="lg" 
+                className="gradient-bg font-semibold shadow-medium hover:shadow-strong transition-all px-10 h-14 text-base group"
+                onClick={() => navigate("/auth")}
+              >
                 Começar Gratuitamente
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>

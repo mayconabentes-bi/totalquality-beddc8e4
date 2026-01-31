@@ -1,8 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Menu, X } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Header = () => {
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
@@ -37,10 +39,10 @@ const Header = () => {
 
           {/* Desktop CTA */}
           <div className="hidden lg:flex items-center gap-3">
-            <Button variant="ghost" className="font-medium">
+            <Button variant="ghost" className="font-medium" onClick={() => navigate("/auth")}>
               Entrar
             </Button>
-            <Button className="gradient-bg font-medium shadow-soft hover:shadow-medium transition-shadow">
+            <Button className="gradient-bg font-medium shadow-soft hover:shadow-medium transition-shadow" onClick={() => navigate("/auth")}>
               Começar Grátis
             </Button>
           </div>
@@ -71,10 +73,10 @@ const Header = () => {
                 Contato
               </a>
               <div className="flex flex-col gap-2 pt-4 border-t border-border/50">
-                <Button variant="ghost" className="w-full font-medium">
+                <Button variant="ghost" className="w-full font-medium" onClick={() => navigate("/auth")}>
                   Entrar
                 </Button>
-                <Button className="w-full gradient-bg font-medium">
+                <Button className="w-full gradient-bg font-medium" onClick={() => navigate("/auth")}>
                   Começar Grátis
                 </Button>
               </div>
