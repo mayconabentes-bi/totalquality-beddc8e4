@@ -155,8 +155,9 @@ const Auth = () => {
     isCreatingProfileRef.current = true;
 
     // Create a 10-second timeout for the entire signup process
+    let overallTimeoutId: NodeJS.Timeout | null = null;
     const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => {
+      overallTimeoutId = setTimeout(() => {
         reject(new Error("SIGNUP_TIMEOUT"));
       }, 10000);
     });
@@ -265,6 +266,9 @@ const Auth = () => {
           }
 
           // Success - user account, company, and profile created successfully
+          // Clear the overall timeout since we completed successfully
+          if (overallTimeoutId) clearTimeout(overallTimeoutId);
+          
           toast.success("Conta criada com sucesso! Verifique seu email para confirmar.");
           setMode("login");
         })(),
