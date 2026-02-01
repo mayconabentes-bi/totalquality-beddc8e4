@@ -46,6 +46,7 @@ const IntelligenceDashboards = ({ companyId }: Props) => {
     if (companyId) {
       fetchDashboardData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyId]);
 
   const fetchDashboardData = async () => {
@@ -74,12 +75,16 @@ const IntelligenceDashboards = ({ companyId }: Props) => {
       const grouped: Record<string, RevenueQualityData> = {};
       
       data.forEach((student) => {
-        const key = `${student.current_payment_status || 'Não Definido'}-${student.current_plan || 'Não Definido'}-${student.current_payment_method || 'Não Definido'}`;
+        const paymentStatus = student.current_payment_status || 'Não Definido';
+        const planType = student.current_plan || 'Não Definido';
+        const paymentMethod = student.current_payment_method || 'Não Definido';
+        const key = JSON.stringify({ paymentStatus, planType, paymentMethod });
+        
         if (!grouped[key]) {
           grouped[key] = {
-            paymentStatus: student.current_payment_status || 'Não Definido',
-            planType: student.current_plan || 'Não Definido',
-            paymentMethod: student.current_payment_method || 'Não Definido',
+            paymentStatus,
+            planType,
+            paymentMethod,
             count: 0
           };
         }
@@ -202,7 +207,7 @@ const IntelligenceDashboards = ({ companyId }: Props) => {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }) => percent > 0.05 ? `${name}: ${(percent * 100).toFixed(0)}%` : ''}
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"

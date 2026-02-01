@@ -179,6 +179,11 @@ const Secretaria = () => {
       return;
     }
 
+    if (!studentForm.neighborhood) {
+      toast.error("Bairro é obrigatório para análise geodemográfica");
+      return;
+    }
+
     if (studentForm.status === 'Cancelado' && !studentForm.cancellation_reason) {
       toast.error("Motivo de cancelamento é obrigatório quando status é Cancelado");
       return;
@@ -205,7 +210,7 @@ const Secretaria = () => {
       dependents: dependentsJson,
       // New demographic fields
       neighborhood: studentForm.neighborhood || null,
-      age: studentForm.age ? parseInt(studentForm.age) : null,
+      age: studentForm.age ? parseInt(studentForm.age, 10) : null,
       gender: studentForm.gender || null,
       marital_status: studentForm.marital_status || null,
       profession: studentForm.profession || null,
