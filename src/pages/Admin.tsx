@@ -57,6 +57,7 @@ interface MarketIntelligence {
   geolocalizacao?: string;
   densidade_demografica_local?: string;
   indice_concorrencia?: number;
+  [key: string]: string | number | undefined;
 }
 
 interface StatisticalStudies {
@@ -65,6 +66,7 @@ interface StatisticalStudies {
   clv?: number;
   cac?: number;
   ebitda_projetado?: number;
+  [key: string]: number | undefined;
 }
 
 const Admin = () => {

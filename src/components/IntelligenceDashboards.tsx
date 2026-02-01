@@ -133,11 +133,10 @@ const IntelligenceDashboards = ({ companyId }: Props) => {
   };
 
   const fetchConversionFunnelData = async () => {
-    // Fetch visits data
+    // Fetch visits data from student_flow using the 'type' column
     const { data: visitsData, error: visitsError } = await supabase
       .from("student_flow")
-      .select("*")
-      .eq("company_id", companyId);
+      .select("id, type, details");
 
     // Fetch active students
     const { data: studentsData, error: studentsError } = await supabase
@@ -148,8 +147,13 @@ const IntelligenceDashboards = ({ companyId }: Props) => {
 
     if (!visitsError && !studentsError && visitsData && studentsData) {
       const totalVisits = visitsData.length;
-      const scheduledVisits = visitsData.filter(v => v.visit_type === 'visita_com_aula_agendada').length;
-      const convertedVisits = visitsData.filter(v => v.converted_to_student).length;
+      // Use 'type' field instead of 'visit_type'
+      const scheduledVisits = visitsData.filter((v: { type: string | null }) => v.type === 'visita_com_aula_agendada').length;
+      // Check details JSON for conversion status
+      const convertedVisits = visitsData.filter((v: { details: unknown }) => {
+        const details = v.details as Record<string, unknown> | null;
+        return details?.converted_to_student === true;
+      }).length;
       const activeStudents = studentsData.length;
 
       setConversionData([
