@@ -342,7 +342,7 @@ const Auth = () => {
                         Empresa (Cliente)
                       </Label>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Empresas que buscam certificações ISO e auditoria de qualidade
+                        Gestão operacional e alimentação de documentos
                       </p>
                     </div>
                   </div>
@@ -350,10 +350,10 @@ const Auth = () => {
                     <RadioGroupItem value="auditor" id="auditor" className="mt-1" />
                     <div className="flex-1">
                       <Label htmlFor="auditor" className="text-sm font-semibold cursor-pointer">
-                        Auditor
+                        Auditor ISO
                       </Label>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Profissionais responsáveis por realizar auditorias e avaliações
+                        Verificação de conformidade e checklists técnicos
                       </p>
                     </div>
                   </div>
@@ -364,7 +364,7 @@ const Auth = () => {
                         Total Quality ISO
                       </Label>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Administradores da plataforma Total Quality ISO
+                        Gestão macro, delegação e compliance total
                       </p>
                     </div>
                   </div>
