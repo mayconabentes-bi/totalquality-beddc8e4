@@ -23,7 +23,9 @@ import {
   MessageSquare,
   UserCog,
   Award,
-  GraduationCap
+  GraduationCap,
+  Car,
+  Trophy
 } from "lucide-react";
 import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
@@ -336,6 +338,26 @@ const Dashboard = () => {
                 description="Criar usuários e atribuir permissões"
                 items={["Secretaria", "Treinador"]}
                 onClick={() => navigate("/configuracoes")}
+              />
+            )}
+            {/* Estacionamento - Master, proprietario, and estacionamento can see */}
+            {(profile?.role === 'master' || profile?.role === 'proprietario' || profile?.role === 'estacionamento') && (
+              <ModuleCard 
+                icon={Car}
+                title="Estacionamento"
+                description="Gestão de entrada e saída de veículos"
+                items={["0 no pátio", "Tempo real"]}
+                onClick={() => navigate("/estacionamento")}
+              />
+            )}
+            {/* Ranking de Evolução - Master and proprietario can see */}
+            {(profile?.role === 'master' || profile?.role === 'proprietario') && (
+              <ModuleCard 
+                icon={Trophy}
+                title="Ranking de Evolução"
+                description="Desempenho e evolução dos alunos"
+                items={["0 avaliações", "Performance"]}
+                onClick={() => navigate("/treinador")}
               />
             )}
           </div>
