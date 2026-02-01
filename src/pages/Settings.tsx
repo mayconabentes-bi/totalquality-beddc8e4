@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -262,7 +262,7 @@ const Settings = () => {
     navigate("/");
   };
 
-  const fetchCompanies = async () => {
+  const fetchCompanies = useCallback(async () => {
     if (!user || profile?.role !== 'master') return;
     
     try {
@@ -277,14 +277,14 @@ const Settings = () => {
     } catch (error) {
       console.error("Error fetching companies:", error);
     }
-  };
+  }, [user, profile?.role]);
 
   // Fetch companies on mount for master users
   useEffect(() => {
     if (user && profile?.role === 'master') {
       fetchCompanies();
     }
-  }, [user, profile?.role]);
+  }, [user, profile?.role, fetchCompanies]);
 
   const formatCNPJ = (value: string): string => {
     // Remove non-digits
