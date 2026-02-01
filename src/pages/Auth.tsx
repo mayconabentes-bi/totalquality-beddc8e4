@@ -250,8 +250,7 @@ const Auth = () => {
                   // Log the result for debugging database errors
                   console.log("Company insert result:", result);
                   resolve(result);
-                })
-                .catch(error => {
+                }, error => {
                   clearTimeout(timeoutId);
                   // Log the error for debugging (e.g., missing column or RLS policy violation)
                   console.error("Erro Detalhado Banco:", error);
@@ -300,8 +299,7 @@ const Auth = () => {
               .then(result => {
                 clearTimeout(timeoutId);
                 resolve(result);
-              })
-              .catch(error => {
+              }, error => {
                 clearTimeout(timeoutId);
                 reject(error);
               });
