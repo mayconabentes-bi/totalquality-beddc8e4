@@ -309,6 +309,12 @@ const Settings = () => {
     return digits.length === 14;
   };
 
+  const handleCapitalSocialChange = (value: string) => {
+    // Allow only numbers, dots, and commas
+    const sanitized = value.replace(/[^\d.,]/g, '');
+    setNewCompanyForm({ ...newCompanyForm, capital_social: sanitized });
+  };
+
   const handleCreateCompany = async () => {
     // Validate required fields
     if (!newCompanyForm.cnpj || !newCompanyForm.razao_social) {
@@ -340,7 +346,21 @@ const Settings = () => {
       // Prepare statistical_studies JSONB with capital_social
       const statisticalStudies: StatisticalStudies = {};
       if (newCompanyForm.capital_social) {
-        const capitalValue = parseFloat(newCompanyForm.capital_social.replace(/[^\d,.]/g, '').replace(',', '.'));
+        // Parse Brazilian currency format (e.g., "1.000.000,00" or "1000000.00")
+        // Remove all dots (thousand separators), replace comma with dot (decimal separator)
+        let cleanValue = newCompanyForm.capital_social.trim();
+        // If contains both dot and comma, assume Brazilian format (dots for thousands, comma for decimal)
+        if (cleanValue.includes('.') && cleanValue.includes(',')) {
+          cleanValue = cleanValue.replace(/\./g, '').replace(',', '.');
+        } 
+        // If only comma, replace with dot
+        else if (cleanValue.includes(',')) {
+          cleanValue = cleanValue.replace(',', '.');
+        }
+        // Remove any remaining non-numeric characters except dot
+        cleanValue = cleanValue.replace(/[^\d.]/g, '');
+        
+        const capitalValue = parseFloat(cleanValue);
         if (!isNaN(capitalValue) && capitalValue >= 0) {
           statisticalStudies.capital_social = capitalValue;
         }
@@ -1048,9 +1068,12 @@ const Settings = () => {
                     id="company-capital-social"
                     type="text"
                     value={newCompanyForm.capital_social}
-                    onChange={(e) => setNewCompanyForm({ ...newCompanyForm, capital_social: e.target.value })}
-                    placeholder="1000000.00"
+                    onChange={(e) => handleCapitalSocialChange(e.target.value)}
+                    placeholder="1000000.00 ou 1.000.000,00"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Aceita formato brasileiro (1.000.000,00) ou internacional (1000000.00)
+                  </p>
                 </div>
               </div>
 
