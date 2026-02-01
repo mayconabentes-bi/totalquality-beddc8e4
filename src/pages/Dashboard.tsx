@@ -19,7 +19,10 @@ import {
   ShieldCheck,
   ShieldAlert,
   Wrench,
-  MessageSquare
+  MessageSquare,
+  UserCog,
+  Award,
+  GraduationCap
 } from "lucide-react";
 import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
@@ -302,6 +305,36 @@ const Dashboard = () => {
                 description="Net Promoter Score e feedbacks"
                 items={["0 respostas", "NPS: 0"]}
                 onClick={() => navigate("/nps")}
+              />
+            )}
+            {/* Secretaria - Master, proprietario, and secretaria can see */}
+            {(profile?.role === 'master' || profile?.role === 'proprietario' || profile?.role === 'secretaria') && (
+              <ModuleCard 
+                icon={UserCog}
+                title="Secretaria"
+                description="Gestão de alunos, modalidades e visitas"
+                items={["0 alunos", "0 modalidades"]}
+                onClick={() => navigate("/secretaria")}
+              />
+            )}
+            {/* Treinador - Master, proprietario, and treinador can see */}
+            {(profile?.role === 'master' || profile?.role === 'proprietario' || profile?.role === 'treinador') && (
+              <ModuleCard 
+                icon={Award}
+                title="Treinador"
+                description="Avaliação e ranking de desempenho"
+                items={["0 avaliações", "Hoje"]}
+                onClick={() => navigate("/treinador")}
+              />
+            )}
+            {/* Gestão de Equipe - Only master and proprietario can see */}
+            {(profile?.role === 'master' || profile?.role === 'proprietario') && (
+              <ModuleCard 
+                icon={GraduationCap}
+                title="Gestão de Equipe"
+                description="Criar usuários e atribuir permissões"
+                items={["Secretaria", "Treinador"]}
+                onClick={() => navigate("/configuracoes")}
               />
             )}
           </div>
