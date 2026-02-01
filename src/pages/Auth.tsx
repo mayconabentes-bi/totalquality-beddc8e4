@@ -177,8 +177,11 @@ const Auth = () => {
       failedStep = "registro da empresa";
       
       // Add 10 second timeout for company insertion
-      let companyTimeoutId: ReturnType<typeof setTimeout>;
-      const companyResult = await Promise.race([
+      const companyResult = await new Promise<unknown>((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          reject(new Error("Timeout ao criar empresa (10s)"));
+        }, 10000);
+
         supabase
           .from("companies")
           .insert({
@@ -190,15 +193,19 @@ const Auth = () => {
           .select()
           .single()
           .then(result => {
-            clearTimeout(companyTimeoutId);
-            return result;
-          }),
-        new Promise<never>((_, reject) => {
-          companyTimeoutId = setTimeout(() => reject(new Error("Timeout ao criar empresa (10s)")), 10000);
-        })
-      ]);
+            clearTimeout(timeoutId);
+            resolve(result);
+          })
+          .catch(error => {
+            clearTimeout(timeoutId);
+            reject(error);
+          });
+      });
 
-      const { data: companyData, error: companyError } = companyResult;
+      const { data: companyData, error: companyError } = companyResult as {
+        data: { id: string } | null;
+        error: { message: string } | null;
+      };
 
       if (companyError) {
         throw new Error(`Erro ao registrar empresa: ${companyError.message}`);
@@ -212,8 +219,11 @@ const Auth = () => {
       failedStep = "criação do perfil";
       
       // Add 10 second timeout for profile creation
-      let profileTimeoutId: ReturnType<typeof setTimeout>;
-      const profileResult = await Promise.race([
+      const profileResult = await new Promise<unknown>((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          reject(new Error("Timeout ao criar perfil (10s)"));
+        }, 10000);
+
         supabase
           .from("profiles")
           .insert({
@@ -223,15 +233,18 @@ const Auth = () => {
             role: selectedRole,
           })
           .then(result => {
-            clearTimeout(profileTimeoutId);
-            return result;
-          }),
-        new Promise<never>((_, reject) => {
-          profileTimeoutId = setTimeout(() => reject(new Error("Timeout ao criar perfil (10s)")), 10000);
-        })
-      ]);
+            clearTimeout(timeoutId);
+            resolve(result);
+          })
+          .catch(error => {
+            clearTimeout(timeoutId);
+            reject(error);
+          });
+      });
 
-      const { error: profileError } = profileResult;
+      const { error: profileError } = profileResult as {
+        error: { message: string } | null;
+      };
 
       if (profileError) {
         throw new Error(`Erro ao configurar perfil: ${profileError.message}`);
