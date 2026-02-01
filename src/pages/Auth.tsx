@@ -162,6 +162,7 @@ const Auth = () => {
         const { data: companyData, error: companyError } = await supabase
           .from("companies")
           .insert({
+            user_id: authData.user.id,
             name: companyName.trim(),
             phone: phone.trim() || null,
           })
@@ -186,7 +187,7 @@ const Auth = () => {
           throw new Error(`Erro ao configurar perfil: ${profileError.message}`);
         }
 
-        // Success - user account, company, and profile created with unified error handling
+        // Success - user account, company, and profile created successfully
         toast.success("Conta criada com sucesso! Verifique seu email para confirmar.");
         setMode("login");
       }
@@ -198,7 +199,7 @@ const Auth = () => {
       if (errorMessage.includes("already registered") || errorMessage.includes("User already registered")) {
         toast.error("Este email já está cadastrado. Faça login ou use outro email.");
       } else {
-        toast.error(errorMessage || "Erro no cadastro. Por favor, contate o suporte.");
+        toast.error(errorMessage);
       }
     } finally {
       setLoading(false);
