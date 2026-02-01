@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+
 import { CheckCircle, ArrowLeft, Loader2, Building2, User, Mail, Lock, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -327,48 +327,24 @@ const Auth = () => {
               </div>
 
               <div>
-                <Label className="text-sm font-medium">
-                  Modalidade <span className="text-destructive">*</span>
-                </Label>
-                <RadioGroup 
-                  value={selectedRole} 
-                  onValueChange={setSelectedRole}
-                  className="mt-3 space-y-3"
-                >
-                  <div className="flex items-start space-x-3 rounded-lg border border-border p-4 hover:bg-accent/50 transition-colors">
-                    <RadioGroupItem value="empresa" id="empresa" className="mt-1" />
-                    <div className="flex-1">
-                      <Label htmlFor="empresa" className="text-sm font-semibold cursor-pointer">
-                        Empresa (Cliente)
-                      </Label>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Gestão operacional e alimentação de documentos
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3 rounded-lg border border-border p-4 hover:bg-accent/50 transition-colors">
-                    <RadioGroupItem value="auditor" id="auditor" className="mt-1" />
-                    <div className="flex-1">
-                      <Label htmlFor="auditor" className="text-sm font-semibold cursor-pointer">
-                        Auditor ISO
-                      </Label>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Verificação de conformidade e checklists técnicos
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3 rounded-lg border border-border p-4 hover:bg-accent/50 transition-colors">
-                    <RadioGroupItem value="total_quality_iso" id="total_quality_iso" className="mt-1" />
-                    <div className="flex-1">
-                      <Label htmlFor="total_quality_iso" className="text-sm font-semibold cursor-pointer">
-                        Total Quality ISO
-                      </Label>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Gestão macro, delegação e compliance total
-                      </p>
-                    </div>
-                  </div>
-                </RadioGroup>
+                <Label className="text-sm font-medium mb-2 block">Modalidade de Acesso</Label>
+                <div className="grid grid-cols-1 gap-2 mb-4">
+                  {[
+                    { id: 'empresa', label: 'Empresa (Cliente)', desc: 'Gestão operacional e documentos' },
+                    { id: 'auditor', label: 'Auditor ISO', desc: 'Checklists e conformidade' },
+                    { id: 'total_quality_iso', label: 'Total Quality ISO', desc: 'Gestão macro e delegação' }
+                  ].map((role) => (
+                    <button
+                      key={role.id}
+                      type="button"
+                      onClick={() => setSelectedRole(role.id as any)}
+                      className={`p-3 border rounded-lg text-left transition-all ${selectedRole === role.id ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border'}`}
+                    >
+                      <span className="block font-bold text-sm">{role.label}</span>
+                      <span className="text-xs text-muted-foreground">{role.desc}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div>
