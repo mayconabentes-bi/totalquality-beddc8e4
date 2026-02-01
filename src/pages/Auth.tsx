@@ -18,7 +18,10 @@ const loginSchema = z.object({
 const signupSchema = z.object({
   fullName: z.string().trim().min(2, { message: "Nome deve ter no mínimo 2 caracteres" }).max(100),
   companyName: z.string().trim().min(2, { message: "Nome da empresa deve ter no mínimo 2 caracteres" }).max(100),
-  cnpj: z.string().trim().min(14, { message: "CNPJ deve ter no mínimo 14 caracteres" }).max(18),
+  cnpj: z.string()
+    .trim()
+    .transform((val) => val.replace(/[^\d]/g, '')) // Remove formatting characters
+    .refine((val) => val.length === 14, { message: "CNPJ deve conter 14 dígitos" }),
   phone: z.string().trim().optional(),
   email: z.string().trim().email({ message: "Email inválido" }).max(255),
   password: z.string().min(6, { message: "Senha deve ter no mínimo 6 caracteres" }),
@@ -162,12 +165,13 @@ const Auth = () => {
 
       if (authData.user) {
         // Step 2: Create company record immediately and capture the id
+        // Use the normalized CNPJ from validation result (without formatting)
         const { data: companyData, error: companyError } = await supabase
           .from("companies")
           .insert({
             user_id: authData.user.id,
             name: companyName.trim(),
-            cnpj: cnpj.trim(),
+            cnpj: result.data.cnpj, // Use normalized CNPJ from Zod transform
             phone: phone.trim() || null,
           })
           .select()
