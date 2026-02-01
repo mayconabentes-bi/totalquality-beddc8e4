@@ -24,8 +24,8 @@ USING (
   )
 );
 
--- 4. Policy for Total Quality ISO: Global Vision (Auditors of all companies)
--- Allows full read access for macro management and indicators
+-- 4. Policy for Total Quality ISO: Global Vision
+-- Allows full read access for macro management and indicators across all companies
 DROP POLICY IF EXISTS "Total Quality ISO possui visão global" ON public.companies;
 CREATE POLICY "Total Quality ISO possui visão global" 
 ON public.companies 
@@ -37,7 +37,9 @@ USING (
   )
 );
 
--- 5. Policy for Auditors: See companies where they are linked
+-- 5. Policy for Auditors: See all companies
+-- Note: Currently grants access to all companies. For company-specific auditors,
+-- add company_id filter similar to empresa policy
 DROP POLICY IF EXISTS "Auditores veem empresas vinculadas" ON public.companies;
 CREATE POLICY "Auditores veem empresas vinculadas" 
 ON public.companies 
