@@ -198,14 +198,23 @@ const Settings = () => {
     }
 
     try {
-      // Note: In production, this should be done via an edge function or admin API
-      // For now, this is a simplified version
-      toast.info("Funcionalidade de criação de usuário requer implementação server-side");
-      toast.info("Por favor, use o painel de administração ou edge functions do Supabase");
+      // Note: In production, user creation requires a Supabase Edge Function or Admin API
+      // This is because client-side code cannot securely create users with email/password
+      // 
+      // To implement this:
+      // 1. Create a Supabase Edge Function that uses the Admin API
+      // 2. The function should:
+      //    - Create the user with supabase.auth.admin.createUser()
+      //    - Create the profile entry with the company_id and role
+      //    - Send a password reset email or set a temporary password
+      // 3. Call that edge function from here instead of showing this message
       
-      // Clear form
-      setNewUserForm({ email: "", password: "", full_name: "", role: "" });
-      setUserDialogOpen(false);
+      toast.warning("Funcionalidade de criação de usuário requer implementação server-side", {
+        duration: 5000
+      });
+      toast.info("Para criar usuários, utilize o painel de administração do Supabase ou implemente uma Edge Function", {
+        duration: 5000
+      });
     } catch (error) {
       console.error("Error creating user:", error);
       toast.error("Erro ao criar usuário");
@@ -626,6 +635,14 @@ const Settings = () => {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
+              {/* Warning banner */}
+              <div className="p-3 border border-yellow-200 bg-yellow-50 rounded-lg">
+                <p className="text-sm text-yellow-800">
+                  ⚠️ <strong>Nota:</strong> A criação de usuários requer implementação server-side via Supabase Edge Function. 
+                  Por enquanto, use o painel de administração do Supabase para criar usuários manualmente.
+                </p>
+              </div>
+              
               <div className="space-y-2">
                 <Label htmlFor="user-email">Email *</Label>
                 <Input
