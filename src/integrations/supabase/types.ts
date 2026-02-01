@@ -438,6 +438,63 @@ export type Database = {
           },
         ]
       }
+      parking_logs: {
+        Row: {
+          id: string
+          company_id: string
+          student_id: string | null
+          student_name: string
+          license_plate: string
+          entry_time: string
+          exit_time: string | null
+          status: 'Entrada' | 'Saída'
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          student_id?: string | null
+          student_name: string
+          license_plate: string
+          entry_time?: string
+          exit_time?: string | null
+          status?: 'Entrada' | 'Saída'
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          student_id?: string | null
+          student_name?: string
+          license_plate?: string
+          entry_time?: string
+          exit_time?: string | null
+          status?: 'Entrada' | 'Saída'
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parking_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parking_logs_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

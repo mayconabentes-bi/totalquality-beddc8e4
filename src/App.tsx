@@ -13,6 +13,7 @@ import Maintenance from "./pages/Maintenance";
 import NPS from "./pages/NPS";
 import Secretaria from "./pages/Secretaria";
 import Treinador from "./pages/Treinador";
+import Parking from "./pages/Parking";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -104,6 +105,14 @@ const App = () => (
             element={
               <ProtectedRoute allowedRoles={['master', 'proprietario', 'treinador']}>
                 <Treinador />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/estacionamento" 
+            element={
+              <ProtectedRoute allowedRoles={['master', 'proprietario', 'estacionamento']}>
+                <Parking />
               </ProtectedRoute>
             } 
           />

@@ -69,7 +69,9 @@ const Secretaria = () => {
     // New demographic fields
     neighborhood: "", age: "", gender: "", marital_status: "", profession: "",
     // New financial fields
-    current_plan: "", current_payment_method: "", current_payment_status: "Adimplente"
+    current_plan: "", current_payment_method: "", current_payment_status: "Adimplente",
+    // Initial Evaluation fields (stored in strategic_data)
+    weight: "", body_fat_percentage: "", objective: "", last_evaluation_date: ""
   });
   const [studentDialogOpen, setStudentDialogOpen] = useState(false);
 
@@ -189,9 +191,19 @@ const Secretaria = () => {
       return;
     }
 
-    let dependentsJson;
+    // Build strategic_data object (includes dependents + evaluation data)
+    let strategicData;
     try {
-      dependentsJson = JSON.parse(studentForm.dependents);
+      const dependents = JSON.parse(studentForm.dependents);
+      strategicData = {
+        dependents: dependents,
+        initial_evaluation: {
+          weight: studentForm.weight ? parseFloat(studentForm.weight) : null,
+          body_fat_percentage: studentForm.body_fat_percentage ? parseFloat(studentForm.body_fat_percentage) : null,
+          objective: studentForm.objective || null,
+          last_evaluation_date: studentForm.last_evaluation_date || null
+        }
+      };
     } catch {
       toast.error("Formato inválido para dependentes (deve ser JSON válido)");
       return;
@@ -207,7 +219,7 @@ const Secretaria = () => {
       status: studentForm.status,
       cancellation_reason: studentForm.status === 'Cancelado' ? studentForm.cancellation_reason : null,
       geo_economic_profile: studentForm.geo_economic_profile || null,
-      dependents: dependentsJson,
+      dependents: strategicData,
       // New demographic fields
       neighborhood: studentForm.neighborhood || null,
       age: studentForm.age ? parseInt(studentForm.age, 10) : null,
@@ -229,7 +241,8 @@ const Secretaria = () => {
         name: "", cpf: "", address: "", phone: "", email: "",
         status: "Ativo", cancellation_reason: "", geo_economic_profile: "", dependents: "[]",
         neighborhood: "", age: "", gender: "", marital_status: "", profession: "",
-        current_plan: "", current_payment_method: "", current_payment_status: "Adimplente"
+        current_plan: "", current_payment_method: "", current_payment_status: "Adimplente",
+        weight: "", body_fat_percentage: "", objective: "", last_evaluation_date: ""
       });
       setStudentDialogOpen(false);
       fetchStudents(companyId);
@@ -532,6 +545,65 @@ const Secretaria = () => {
                               <SelectItem value="Inadimplente">Inadimplente</SelectItem>
                             </SelectContent>
                           </Select>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Initial Evaluation Section */}
+                    <div className="border-t pt-4 mt-2">
+                      <h3 className="text-lg font-semibold mb-4">Avaliação Inicial</h3>
+                      <div className="grid gap-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="grid gap-2">
+                            <Label htmlFor="weight">Peso (kg)</Label>
+                            <Input
+                              id="weight"
+                              type="number"
+                              step="0.1"
+                              min="0"
+                              value={studentForm.weight}
+                              onChange={(e) => setStudentForm({ ...studentForm, weight: e.target.value })}
+                              placeholder="Ex: 70.5"
+                            />
+                          </div>
+                          <div className="grid gap-2">
+                            <Label htmlFor="body_fat_percentage">% de Gordura</Label>
+                            <Input
+                              id="body_fat_percentage"
+                              type="number"
+                              step="0.1"
+                              min="0"
+                              max="100"
+                              value={studentForm.body_fat_percentage}
+                              onChange={(e) => setStudentForm({ ...studentForm, body_fat_percentage: e.target.value })}
+                              placeholder="Ex: 15.5"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="objective">Objetivo</Label>
+                          <Select
+                            value={studentForm.objective}
+                            onValueChange={(value) => setStudentForm({ ...studentForm, objective: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o objetivo..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Hipertrofia">Hipertrofia</SelectItem>
+                              <SelectItem value="Emagrecimento">Emagrecimento</SelectItem>
+                              <SelectItem value="Saúde">Saúde</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="last_evaluation_date">Data da Última Avaliação</Label>
+                          <Input
+                            id="last_evaluation_date"
+                            type="date"
+                            value={studentForm.last_evaluation_date}
+                            onChange={(e) => setStudentForm({ ...studentForm, last_evaluation_date: e.target.value })}
+                          />
                         </div>
                       </div>
                     </div>

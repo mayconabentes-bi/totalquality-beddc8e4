@@ -5,7 +5,18 @@ import { toast } from "sonner";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: ("auditor" | "empresa" | "total_quality_iso" | "master")[];
+  allowedRoles?: (
+    | "auditor" 
+    | "empresa" 
+    | "total_quality_iso" 
+    | "master"
+    | "proprietario"
+    | "secretaria"
+    | "treinador"
+    | "recepcionista"
+    | "manutencao"
+    | "estacionamento"
+  )[];
 }
 
 const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
@@ -43,7 +54,7 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
             } else if (profile.role === 'master') {
               // Master role has automatic access to any protected route
               if (isMounted) setAuthorized(true);
-            } else if (!allowedRoles.includes(profile.role as "auditor" | "empresa" | "total_quality_iso" | "master")) {
+            } else if (!allowedRoles.includes(profile.role as any)) {
               toast.error("Acesso negado para esta modalidade.");
               if (isMounted) setAuthorized(false);
             } else {
