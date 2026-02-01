@@ -43,7 +43,7 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
           if (allowedRoles) {
             const { data: profile, error } = await supabase
               .from("profiles")
-              .select("role")
+              .select("role, status_homologacao")
               .eq("user_id", session.user.id)
               .single();
 
@@ -54,6 +54,10 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
             } else if (profile.role === 'master') {
               // Master role has automatic access to any protected route
               if (isMounted) setAuthorized(true);
+            } else if (!profile.status_homologacao) {
+              // Check if user is approved/homologated
+              toast.error("Acesso negado. Aguardando homologação do usuário.");
+              if (isMounted) setAuthorized(false);
             } else if (!allowedRoles.includes(profile.role as any)) {
               toast.error("Acesso negado para esta modalidade.");
               if (isMounted) setAuthorized(false);
