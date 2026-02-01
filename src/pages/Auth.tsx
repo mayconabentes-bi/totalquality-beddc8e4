@@ -47,11 +47,15 @@ const Auth = () => {
       // Only redirect if we have a session and we're not currently creating a profile
       if (session?.user && !isCreatingProfileRef.current) {
         // Verify profile exists before redirecting
-        const { data: profile } = await supabase
+        const { data: profile, error } = await supabase
           .from("profiles")
           .select("id")
           .eq("user_id", session.user.id)
           .single();
+        
+        if (error) {
+          console.error("Error checking profile:", error);
+        }
         
         if (profile) {
           navigate("/dashboard");
@@ -62,11 +66,15 @@ const Auth = () => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user && !isCreatingProfileRef.current) {
         // Verify profile exists before redirecting
-        const { data: profile } = await supabase
+        const { data: profile, error } = await supabase
           .from("profiles")
           .select("id")
           .eq("user_id", session.user.id)
           .single();
+        
+        if (error) {
+          console.error("Error checking profile:", error);
+        }
         
         if (profile) {
           navigate("/dashboard");
@@ -189,7 +197,7 @@ const Auth = () => {
           .insert({
             user_id: authData.user.id,
             full_name: fullName.trim(),
-            company_id: companyData?.id || null,
+            company_id: companyData.id,
             role: selectedRole,
           });
 
