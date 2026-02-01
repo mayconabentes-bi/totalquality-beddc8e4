@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import IntelligenceDashboards from "@/components/IntelligenceDashboards";
 import { 
   CheckCircle, 
   LogOut, 
@@ -339,6 +340,11 @@ const Dashboard = () => {
             )}
           </div>
         </div>
+
+        {/* Intelligence Dashboards - Only for master and proprietario */}
+        {(profile?.role === 'master' || profile?.role === 'proprietario') && company?.id && (
+          <IntelligenceDashboards companyId={company.id} />
+        )}
       </main>
     </div>
   );
