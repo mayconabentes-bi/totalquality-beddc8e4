@@ -11,6 +11,7 @@ interface ProtectedRouteProps {
 const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [authorized, setAuthorized] = useState(false);
+  const [hasSession, setHasSession] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -21,8 +22,12 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
         const { data: { session } } = await supabase.auth.getSession();
 
         if (!session) {
-          if (isMounted) setAuthorized(false);
+          if (isMounted) {
+            setHasSession(false);
+            setAuthorized(false);
+          }
         } else {
+          if (isMounted) setHasSession(true);
           // Busca o profile apenas se houver restrição de role
           if (allowedRoles) {
             const { data: profile, error } = await supabase
@@ -64,8 +69,12 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   }
 
   if (!authorized) {
-    // Redireciona para login e salva a página que o usuário tentou acessar
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+    // Se não tem sessão, redireciona para login
+    if (!hasSession) {
+      return <Navigate to="/auth" state={{ from: location }} replace />;
+    }
+    // Se tem sessão mas não tem role adequada, redireciona para dashboard
+    return <Navigate to="/dashboard" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;
