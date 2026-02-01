@@ -48,21 +48,25 @@ const Parking = () => {
 
   useEffect(() => {
     fetchData();
+    
     // Set up real-time subscription for parking logs
-    const subscription = supabase
-      .channel('parking_logs_changes')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'parking_logs' },
-        () => {
-          // Refetch data when changes occur
-          fetchParkingLogs(companyId);
-        }
-      )
-      .subscribe();
+    if (companyId) {
+      const subscription = supabase
+        .channel('parking_logs_changes')
+        .on('postgres_changes', 
+          { event: '*', schema: 'public', table: 'parking_logs' },
+          () => {
+            // Refetch data when changes occur
+            fetchParkingLogs(companyId);
+          }
+        )
+        .subscribe();
 
-    return () => {
-      subscription.unsubscribe();
-    };
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchData = async () => {
