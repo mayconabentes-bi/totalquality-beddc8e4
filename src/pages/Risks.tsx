@@ -34,7 +34,7 @@ interface Risk {
   id: string;
   company_id: string;
   description: string;
-  category: 'Operacional' | 'Financeiro' | 'Mercado';
+  category: 'operacional' | 'financeiro' | 'mercado';
   probability: number;
   impact: number;
   mitigation_plan: string | null;
@@ -53,7 +53,7 @@ const Risks = () => {
   const [editingRisk, setEditingRisk] = useState<Risk | null>(null);
   const [formData, setFormData] = useState({
     description: "",
-    category: "Operacional" as 'Operacional' | 'Financeiro' | 'Mercado',
+    category: "operacional" as 'operacional' | 'financeiro' | 'mercado',
     probability: 3,
     impact: 3,
     mitigation_plan: ""
@@ -144,7 +144,7 @@ const Risks = () => {
       setEditingRisk(null);
       setFormData({
         description: "",
-        category: "Operacional",
+        category: "operacional",
         probability: 3,
         impact: 3,
         mitigation_plan: ""
@@ -240,7 +240,7 @@ const Risks = () => {
                   setEditingRisk(null);
                   setFormData({
                     description: "",
-                    category: "Operacional",
+                    category: "operacional",
                     probability: 3,
                     impact: 3,
                     mitigation_plan: ""
@@ -283,9 +283,9 @@ const Risks = () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Operacional">Operacional</SelectItem>
-                        <SelectItem value="Financeiro">Financeiro</SelectItem>
-                        <SelectItem value="Mercado">Mercado</SelectItem>
+                        <SelectItem value="operacional">Operacional</SelectItem>
+                        <SelectItem value="financeiro">Financeiro</SelectItem>
+                        <SelectItem value="mercado">Mercado</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

@@ -63,7 +63,7 @@ export type Database = {
         Row: {
           company_id: string | null
           created_at: string
-          full_name: string | null
+          name: string | null
           id: string
           role: string | null
           status_homologacao: boolean
@@ -73,7 +73,7 @@ export type Database = {
         Insert: {
           company_id?: string | null
           created_at?: string
-          full_name?: string | null
+          name?: string | null
           id?: string
           role?: string | null
           status_homologacao?: boolean
@@ -83,7 +83,7 @@ export type Database = {
         Update: {
           company_id?: string | null
           created_at?: string
-          full_name?: string | null
+          name?: string | null
           id?: string
           role?: string | null
           status_homologacao?: boolean
@@ -105,7 +105,7 @@ export type Database = {
           id: string
           company_id: string
           description: string
-          category: 'Operacional' | 'Financeiro' | 'Mercado'
+          category: 'operacional' | 'financeiro' | 'mercado'
           probability: number
           impact: number
           mitigation_plan: string | null
@@ -116,7 +116,7 @@ export type Database = {
           id?: string
           company_id: string
           description: string
-          category: 'Operacional' | 'Financeiro' | 'Mercado'
+          category: 'operacional' | 'financeiro' | 'mercado'
           probability: number
           impact: number
           mitigation_plan?: string | null
@@ -127,7 +127,7 @@ export type Database = {
           id?: string
           company_id?: string
           description?: string
-          category?: 'Operacional' | 'Financeiro' | 'Mercado'
+          category?: 'operacional' | 'financeiro' | 'mercado'
           probability?: number
           impact?: number
           mitigation_plan?: string | null
@@ -152,7 +152,7 @@ export type Database = {
           category: string
           last_maintenance: string | null
           next_maintenance: string | null
-          status: 'Ok' | 'Alerta' | 'Crítico'
+          status: 'ok' | 'alerta' | 'critico'
           created_at: string
           updated_at: string
         }
@@ -163,7 +163,7 @@ export type Database = {
           category: string
           last_maintenance?: string | null
           next_maintenance?: string | null
-          status: 'Ok' | 'Alerta' | 'Crítico'
+          status: 'ok' | 'alerta' | 'critico'
           created_at?: string
           updated_at?: string
         }
@@ -174,7 +174,7 @@ export type Database = {
           category?: string
           last_maintenance?: string | null
           next_maintenance?: string | null
-          status?: 'Ok' | 'Alerta' | 'Crítico'
+          status?: 'ok' | 'alerta' | 'critico'
           created_at?: string
           updated_at?: string
         }
@@ -270,10 +270,18 @@ export type Database = {
           address: string | null
           phone: string | null
           email: string | null
-          status: 'Ativo' | 'Inativo' | 'Cancelado'
+          status: 'ativo' | 'inativo' | 'cancelado'
           cancellation_reason: string | null
           dependents: Json
           geo_economic_profile: string | null
+          neighborhood: string | null
+          age: number | null
+          gender: 'masculino' | 'feminino' | 'outro' | 'nao_informar' | null
+          marital_status: 'solteiro' | 'casado' | 'divorciado' | 'viuvo' | 'uniao_estavel' | 'outro' | null
+          profession: string | null
+          current_plan: 'mensal' | 'bimestral' | 'trimestral' | 'semestral' | 'anual' | null
+          current_payment_method: 'pix' | 'cartao_credito' | 'debito' | 'boleto' | 'recorrencia' | null
+          current_payment_status: 'adimplente' | 'inadimplente' | null
           created_at: string
           updated_at: string
         }
@@ -285,10 +293,18 @@ export type Database = {
           address?: string | null
           phone?: string | null
           email?: string | null
-          status?: 'Ativo' | 'Inativo' | 'Cancelado'
+          status?: 'ativo' | 'inativo' | 'cancelado'
           cancellation_reason?: string | null
           dependents?: Json
           geo_economic_profile?: string | null
+          neighborhood?: string | null
+          age?: number | null
+          gender?: 'masculino' | 'feminino' | 'outro' | 'nao_informar' | null
+          marital_status?: 'solteiro' | 'casado' | 'divorciado' | 'viuvo' | 'uniao_estavel' | 'outro' | null
+          profession?: string | null
+          current_plan?: 'mensal' | 'bimestral' | 'trimestral' | 'semestral' | 'anual' | null
+          current_payment_method?: 'pix' | 'cartao_credito' | 'debito' | 'boleto' | 'recorrencia' | null
+          current_payment_status?: 'adimplente' | 'inadimplente' | null
           created_at?: string
           updated_at?: string
         }
@@ -300,10 +316,18 @@ export type Database = {
           address?: string | null
           phone?: string | null
           email?: string | null
-          status?: 'Ativo' | 'Inativo' | 'Cancelado'
+          status?: 'ativo' | 'inativo' | 'cancelado'
           cancellation_reason?: string | null
           dependents?: Json
           geo_economic_profile?: string | null
+          neighborhood?: string | null
+          age?: number | null
+          gender?: 'masculino' | 'feminino' | 'outro' | 'nao_informar' | null
+          marital_status?: 'solteiro' | 'casado' | 'divorciado' | 'viuvo' | 'uniao_estavel' | 'outro' | null
+          profession?: string | null
+          current_plan?: 'mensal' | 'bimestral' | 'trimestral' | 'semestral' | 'anual' | null
+          current_payment_method?: 'pix' | 'cartao_credito' | 'debito' | 'boleto' | 'recorrencia' | null
+          current_payment_status?: 'adimplente' | 'inadimplente' | null
           created_at?: string
           updated_at?: string
         }
@@ -322,7 +346,7 @@ export type Database = {
           id: string
           company_id: string
           visitor_name: string
-          visit_type: 'Visita sem Aula' | 'Visita com Aula Agendada'
+          visit_type: 'visita_sem_aula' | 'visita_com_aula_agendada'
           visit_date: string
           converted_to_student: boolean
           student_id: string | null
@@ -334,7 +358,7 @@ export type Database = {
           id?: string
           company_id: string
           visitor_name: string
-          visit_type: 'Visita sem Aula' | 'Visita com Aula Agendada'
+          visit_type: 'visita_sem_aula' | 'visita_com_aula_agendada'
           visit_date?: string
           converted_to_student?: boolean
           student_id?: string | null
@@ -346,7 +370,7 @@ export type Database = {
           id?: string
           company_id?: string
           visitor_name?: string
-          visit_type?: 'Visita sem Aula' | 'Visita com Aula Agendada'
+          visit_type?: 'visita_sem_aula' | 'visita_com_aula_agendada'
           visit_date?: string
           converted_to_student?: boolean
           student_id?: string | null
@@ -447,7 +471,7 @@ export type Database = {
           license_plate: string
           entry_time: string
           exit_time: string | null
-          status: 'Entrada' | 'Saída'
+          status: 'entrada' | 'saida'
           notes: string | null
           created_at: string
           updated_at: string
@@ -460,7 +484,7 @@ export type Database = {
           license_plate: string
           entry_time?: string
           exit_time?: string | null
-          status?: 'Entrada' | 'Saída'
+          status?: 'entrada' | 'saida'
           notes?: string | null
           created_at?: string
           updated_at?: string
@@ -473,7 +497,7 @@ export type Database = {
           license_plate?: string
           entry_time?: string
           exit_time?: string | null
-          status?: 'Entrada' | 'Saída'
+          status?: 'entrada' | 'saida'
           notes?: string | null
           created_at?: string
           updated_at?: string
