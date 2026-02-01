@@ -83,11 +83,13 @@ const NPS = () => {
   };
 
   const fetchFeedbacks = async () => {
+    if (!profile?.company_id) return;
+    
     try {
       const { data, error } = await supabase
         .from("nps_feedback")
         .select("*")
-        .eq("company_id", profile?.company_id!)
+        .eq("company_id", profile.company_id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;

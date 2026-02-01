@@ -92,11 +92,13 @@ const Risks = () => {
   };
 
   const fetchRisks = async () => {
+    if (!profile?.company_id) return;
+    
     try {
       const { data, error } = await supabase
         .from("risks")
         .select("*")
-        .eq("company_id", profile?.company_id!)
+        .eq("company_id", profile.company_id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;

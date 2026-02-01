@@ -94,11 +94,13 @@ const Maintenance = () => {
   };
 
   const fetchAssets = async () => {
+    if (!profile?.company_id) return;
+    
     try {
       const { data, error } = await supabase
         .from("maintenance_assets")
         .select("*")
-        .eq("company_id", profile?.company_id!)
+        .eq("company_id", profile.company_id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
