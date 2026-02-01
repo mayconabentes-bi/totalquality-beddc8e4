@@ -148,33 +148,17 @@ const Auth = () => {
     setLoading(true);
     isCreatingProfileRef.current = true;
 
-    const redirectUrl = `${window.location.origin}/dashboard`;
-
     try {
-      // Step 1: Create user account
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // Step 1: Create user account with authentication
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: email.trim(),
         password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            full_name: fullName.trim(),
-            company_name: companyName.trim(),
-          }
-        }
       });
 
-      if (authError) {
-        if (authError.message.includes("already registered")) {
-          toast.error("Este email já está cadastrado. Faça login ou use outro email.");
-        } else {
-          toast.error(authError.message);
-        }
-        return;
-      }
+      if (signUpError) throw signUpError;
 
       if (authData.user) {
-        // Step 2: Create company and profile in sequence as a logical transaction
+        // Step 2: Create company record immediately and capture the id
         const { data: companyData, error: companyError } = await supabase
           .from("companies")
           .insert({
@@ -186,12 +170,10 @@ const Auth = () => {
           .single();
 
         if (companyError) {
-          console.error("Error creating company:", companyError);
-          toast.error("Erro ao criar registro da empresa. Por favor, entre em contato com o suporte.");
-          return;
+          throw new Error(`Erro ao registrar empresa: ${companyError.message}`);
         }
 
-        // Step 3: Create profile with company_id
+        // Step 3: Create profile with company_id link
         const { error: profileError } = await supabase
           .from("profiles")
           .insert({
@@ -202,13 +184,22 @@ const Auth = () => {
           });
 
         if (profileError) {
-          console.error("Error creating profile:", profileError);
-          toast.error("Erro ao criar perfil. Por favor, entre em contato com o suporte.");
-          return;
+          throw new Error(`Erro ao configurar perfil: ${profileError.message}`);
         }
 
+        // Success - user account, company, and profile created successfully
         toast.success("Conta criada com sucesso! Verifique seu email para confirmar.");
         setMode("login");
+      }
+    } catch (error) {
+      console.error("Registration error:", error);
+      
+      // Provide user-friendly error messages
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes("already registered") || errorMessage.includes("User already registered")) {
+        toast.error("Este email já está cadastrado. Faça login ou use outro email.");
+      } else {
+        toast.error(errorMessage);
       }
     } finally {
       setLoading(false);
