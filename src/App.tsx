@@ -7,6 +7,9 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
+import Risks from "./pages/Risks";
+import Maintenance from "./pages/Maintenance";
+import NPS from "./pages/NPS";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -58,6 +61,30 @@ const App = () => (
             element={
               <ProtectedRoute allowedRoles={['empresa', 'total_quality_iso']}>
                 <div className="p-8">Documentos</div>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/riscos" 
+            element={
+              <ProtectedRoute allowedRoles={['master', 'proprietario']}>
+                <Risks />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/manutencao" 
+            element={
+              <ProtectedRoute allowedRoles={['master', 'proprietario', 'manutencao']}>
+                <Maintenance />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/nps" 
+            element={
+              <ProtectedRoute allowedRoles={['master', 'proprietario', 'recepcionista']}>
+                <NPS />
               </ProtectedRoute>
             } 
           />
