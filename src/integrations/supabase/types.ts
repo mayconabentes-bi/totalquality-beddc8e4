@@ -20,9 +20,12 @@ export type Database = {
           created_at: string
           id: string
           industry: string | null
+          logo_url: string | null
+          market_intelligence: Json
           name: string
           phone: string | null
           size: string | null
+          statistical_studies: Json
           updated_at: string
           user_id: string
         }
@@ -31,9 +34,12 @@ export type Database = {
           created_at?: string
           id?: string
           industry?: string | null
+          logo_url?: string | null
+          market_intelligence?: Json
           name: string
           phone?: string | null
           size?: string | null
+          statistical_studies?: Json
           updated_at?: string
           user_id: string
         }
@@ -42,9 +48,12 @@ export type Database = {
           created_at?: string
           id?: string
           industry?: string | null
+          logo_url?: string | null
+          market_intelligence?: Json
           name?: string
           phone?: string | null
           size?: string | null
+          statistical_studies?: Json
           updated_at?: string
           user_id?: string
         }
@@ -57,6 +66,7 @@ export type Database = {
           full_name: string | null
           id: string
           role: string | null
+          status_homologacao: boolean
           updated_at: string
           user_id: string
         }
@@ -66,6 +76,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           role?: string | null
+          status_homologacao?: boolean
           updated_at?: string
           user_id: string
         }
@@ -75,6 +86,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           role?: string | null
+          status_homologacao?: boolean
           updated_at?: string
           user_id?: string
         }
