@@ -47,6 +47,9 @@ const Auth = () => {
   const selectedRole = "empresa";
 
   useEffect(() => {
+    let authTimeoutId: NodeJS.Timeout | null = null;
+    let mountTimeoutId: NodeJS.Timeout | null = null;
+    
     // Check if user is already logged in
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       // Only redirect if we have a session and we're not currently creating a profile
@@ -67,7 +70,7 @@ const Auth = () => {
         } else if (session?.user && !profile && !isCreatingProfileRef.current) {
           // User is logged in but has no profile - wait 5 seconds then sign out to prevent infinite redirect loop
           console.log("User logged in without profile, waiting 5 seconds before automatic sign out");
-          setTimeout(async () => {
+          authTimeoutId = setTimeout(async () => {
             // Check again if profile exists after 5 seconds
             const { data: profileCheck } = await supabase
               .from("profiles")
@@ -106,7 +109,7 @@ const Auth = () => {
         } else if (session?.user && !profile && !isCreatingProfileRef.current) {
           // User is logged in but has no profile - wait 5 seconds then sign out to prevent infinite redirect loop
           console.log("User logged in without profile (on mount), waiting 5 seconds before automatic sign out");
-          setTimeout(async () => {
+          mountTimeoutId = setTimeout(async () => {
             // Check again if profile exists after 5 seconds
             const { data: profileCheck } = await supabase
               .from("profiles")
@@ -127,7 +130,11 @@ const Auth = () => {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      if (authTimeoutId) clearTimeout(authTimeoutId);
+      if (mountTimeoutId) clearTimeout(mountTimeoutId);
+    };
   }, [navigate]);
 
   const clearErrors = () => setErrors({});
@@ -332,7 +339,6 @@ const Auth = () => {
       // Mandatory ejection on failure - first action must be signOut
       await supabase.auth.signOut();
       
-      console.error("Registration error:", error);
       console.error('ERRO REAL DO BANCO:', error);
       
       // Check if error is from the overall timeout
