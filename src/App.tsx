@@ -36,6 +36,22 @@ const App = () => (
               </ProtectedRoute>
             } 
           />
+          <Route 
+            path="/configuracoes" 
+            element={
+              <ProtectedRoute allowedRoles={['total_quality_iso']}>
+                <div className="p-8">Configurações</div>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/documentos" 
+            element={
+              <ProtectedRoute allowedRoles={['empresa', 'total_quality_iso']}>
+                <div className="p-8">Documentos</div>
+              </ProtectedRoute>
+            } 
+          />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
