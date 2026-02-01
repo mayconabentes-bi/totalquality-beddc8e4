@@ -1,10 +1,19 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, FileCheck, BarChart2, Users2, AlertTriangle, BookOpen, Workflow } from "lucide-react";
 
+// Role constants
+const ROLE_AUDITOR = 'auditor';
+const ROLE_EMPRESA = 'empresa';
+const ROLE_TOTAL_QUALITY_ISO = 'total_quality_iso';
+
+// Module title constants
+const MODULE_DOCUMENTOS = 'Documentos';
+const MODULE_AUDITORIAS = 'Auditorias';
+
 const modules = [
   {
     icon: FileCheck,
-    title: "Documentos",
+    title: MODULE_DOCUMENTOS,
     description: "Controle completo de documentos, versões e aprovações com fluxos automatizados.",
     features: ["Controle de versões", "Aprovações digitais", "Distribuição automática"]
   },
@@ -22,7 +31,7 @@ const modules = [
   },
   {
     icon: Users2,
-    title: "Auditorias",
+    title: MODULE_AUDITORIAS,
     description: "Planejamento e execução de auditorias internas com checklists personalizáveis.",
     features: ["Checklists dinâmicos", "Relatórios PDF", "Acompanhamento de evidências"]
   },
@@ -44,7 +53,7 @@ interface ModulesProps {
   role?: string | null;
 }
 
-const Modules = ({ role }: ModulesProps = {}) => {
+const Modules = ({ role = null }: ModulesProps) => {
   // Filter modules based on role
   const getVisibleModules = () => {
     if (!role) {
@@ -54,11 +63,11 @@ const Modules = ({ role }: ModulesProps = {}) => {
 
     return modules.filter((module) => {
       // Hide "Documentos" for 'auditor' role
-      if (role === 'auditor' && module.title === 'Documentos') {
+      if (role === ROLE_AUDITOR && module.title === MODULE_DOCUMENTOS) {
         return false;
       }
       // Hide "Auditorias" for 'empresa' role
-      if (role === 'empresa' && module.title === 'Auditorias') {
+      if (role === ROLE_EMPRESA && module.title === MODULE_AUDITORIAS) {
         return false;
       }
       // total_quality_iso sees everything
