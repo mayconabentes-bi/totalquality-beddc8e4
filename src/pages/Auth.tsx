@@ -175,20 +175,19 @@ const Auth = () => {
 
       // Step 2: Create company record with timeout
       failedStep = "registro da empresa";
-      const companyPromise = supabase
-        .from("companies")
-        .insert({
-          user_id: authData.user.id,
-          name: companyName.trim(),
-          cnpj: result.data.cnpj, // Use normalized CNPJ from Zod transform
-          phone: phone.trim() || null,
-        })
-        .select()
-        .single();
-
+      
       // Add 10 second timeout for company insertion
       const companyResult = await Promise.race([
-        companyPromise,
+        supabase
+          .from("companies")
+          .insert({
+            user_id: authData.user.id,
+            name: companyName.trim(),
+            cnpj: result.data.cnpj, // Use normalized CNPJ from Zod transform
+            phone: phone.trim() || null,
+          })
+          .select()
+          .single(),
         new Promise<never>((_, reject) => 
           setTimeout(() => reject(new Error("Timeout ao criar empresa (10s)")), 10000)
         )
@@ -206,24 +205,23 @@ const Auth = () => {
 
       // Step 3: Create profile with company_id link and timeout
       failedStep = "criação do perfil";
-      const profilePromise = supabase
-        .from("profiles")
-        .insert({
-          user_id: authData.user.id,
-          full_name: fullName.trim(),
-          company_id: companyData.id,
-          role: selectedRole,
-        });
-
+      
       // Add 10 second timeout for profile creation
-      await Promise.race([
-        profilePromise,
+      const profileResult = await Promise.race([
+        supabase
+          .from("profiles")
+          .insert({
+            user_id: authData.user.id,
+            full_name: fullName.trim(),
+            company_id: companyData.id,
+            role: selectedRole,
+          }),
         new Promise<never>((_, reject) => 
           setTimeout(() => reject(new Error("Timeout ao criar perfil (10s)")), 10000)
         )
       ]);
 
-      const { error: profileError } = await profilePromise;
+      const { error: profileError } = profileResult;
 
       if (profileError) {
         throw new Error(`Erro ao configurar perfil: ${profileError.message}`);
