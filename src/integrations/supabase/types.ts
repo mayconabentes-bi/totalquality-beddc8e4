@@ -20,12 +20,11 @@ export type Database = {
           created_at: string
           id: string
           industry: string | null
-          logo_url: string | null
-          market_intelligence: Json
+          market_intelligence: Json | null
           name: string
           phone: string | null
           size: string | null
-          statistical_studies: Json
+          statistical_studies: Json | null
           updated_at: string
           user_id: string
         }
@@ -34,12 +33,11 @@ export type Database = {
           created_at?: string
           id?: string
           industry?: string | null
-          logo_url?: string | null
-          market_intelligence?: Json
+          market_intelligence?: Json | null
           name: string
           phone?: string | null
           size?: string | null
-          statistical_studies?: Json
+          statistical_studies?: Json | null
           updated_at?: string
           user_id: string
         }
@@ -48,45 +46,130 @@ export type Database = {
           created_at?: string
           id?: string
           industry?: string | null
-          logo_url?: string | null
-          market_intelligence?: Json
+          market_intelligence?: Json | null
           name?: string
           phone?: string | null
           size?: string | null
-          statistical_studies?: Json
+          statistical_studies?: Json | null
           updated_at?: string
           user_id?: string
         }
         Relationships: []
       }
+      modalities: {
+        Row: {
+          category: string | null
+          company_id: string | null
+          created_at: string | null
+          id: string
+          name: string
+          strategic_value: Json | null
+        }
+        Insert: {
+          category?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          strategic_value?: Json | null
+        }
+        Update: {
+          category?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          strategic_value?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "modalities_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      performance_rankings: {
+        Row: {
+          attendance_score: number | null
+          evaluation_date: string | null
+          id: string
+          load_score: number | null
+          metrics: Json | null
+          score: number | null
+          student_id: string | null
+          technique_score: number | null
+          treinador_id: string | null
+        }
+        Insert: {
+          attendance_score?: number | null
+          evaluation_date?: string | null
+          id?: string
+          load_score?: number | null
+          metrics?: Json | null
+          score?: number | null
+          student_id?: string | null
+          technique_score?: number | null
+          treinador_id?: string | null
+        }
+        Update: {
+          attendance_score?: number | null
+          evaluation_date?: string | null
+          id?: string
+          load_score?: number | null
+          metrics?: Json | null
+          score?: number | null
+          student_id?: string | null
+          technique_score?: number | null
+          treinador_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "performance_rankings_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "performance_rankings_treinador_id_fkey"
+            columns: ["treinador_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           company_id: string | null
           created_at: string
-          name: string | null
+          full_name: string | null
           id: string
           role: string | null
-          status_homologacao: boolean
+          status_homologacao: boolean | null
           updated_at: string
           user_id: string
         }
         Insert: {
           company_id?: string | null
           created_at?: string
-          name?: string | null
+          full_name?: string | null
           id?: string
           role?: string | null
-          status_homologacao?: boolean
+          status_homologacao?: boolean | null
           updated_at?: string
           user_id: string
         }
         Update: {
           company_id?: string | null
           created_at?: string
-          name?: string | null
+          full_name?: string | null
           id?: string
           role?: string | null
-          status_homologacao?: boolean
+          status_homologacao?: boolean | null
           updated_at?: string
           user_id?: string
         }
@@ -100,290 +183,47 @@ export type Database = {
           },
         ]
       }
-      risks: {
-        Row: {
-          id: string
-          company_id: string
-          description: string
-          category: 'operacional' | 'financeiro' | 'mercado'
-          probability: number
-          impact: number
-          mitigation_plan: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          company_id: string
-          description: string
-          category: 'operacional' | 'financeiro' | 'mercado'
-          probability: number
-          impact: number
-          mitigation_plan?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          company_id?: string
-          description?: string
-          category?: 'operacional' | 'financeiro' | 'mercado'
-          probability?: number
-          impact?: number
-          mitigation_plan?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "risks_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      maintenance_assets: {
-        Row: {
-          id: string
-          company_id: string
-          name: string
-          category: string
-          last_maintenance: string | null
-          next_maintenance: string | null
-          status: 'ok' | 'alerta' | 'critico'
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          company_id: string
-          name: string
-          category: string
-          last_maintenance?: string | null
-          next_maintenance?: string | null
-          status: 'ok' | 'alerta' | 'critico'
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          company_id?: string
-          name?: string
-          category?: string
-          last_maintenance?: string | null
-          next_maintenance?: string | null
-          status?: 'ok' | 'alerta' | 'critico'
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "maintenance_assets_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      nps_feedback: {
-        Row: {
-          id: string
-          company_id: string
-          score: number
-          comment: string | null
-          student_name: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          company_id: string
-          score: number
-          comment?: string | null
-          student_name?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          company_id?: string
-          score?: number
-          comment?: string | null
-          student_name?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "nps_feedback_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      modalities: {
-        Row: {
-          id: string
-          company_id: string
-          name: string
-          description: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          company_id: string
-          name: string
-          description?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          company_id?: string
-          name?: string
-          description?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "modalities_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      students: {
-        Row: {
-          id: string
-          company_id: string
-          name: string
-          cpf: string | null
-          address: string | null
-          phone: string | null
-          email: string | null
-          status: 'ativo' | 'inativo' | 'cancelado'
-          cancellation_reason: string | null
-          dependents: Json
-          geo_economic_profile: string | null
-          neighborhood: string | null
-          age: number | null
-          gender: 'masculino' | 'feminino' | 'outro' | 'nao_informar' | null
-          marital_status: 'solteiro' | 'casado' | 'divorciado' | 'viuvo' | 'uniao_estavel' | 'outro' | null
-          profession: string | null
-          current_plan: 'mensal' | 'bimestral' | 'trimestral' | 'semestral' | 'anual' | null
-          current_payment_method: 'pix' | 'cartao_credito' | 'debito' | 'boleto' | 'recorrencia' | null
-          current_payment_status: 'adimplente' | 'inadimplente' | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          company_id: string
-          name: string
-          cpf?: string | null
-          address?: string | null
-          phone?: string | null
-          email?: string | null
-          status?: 'ativo' | 'inativo' | 'cancelado'
-          cancellation_reason?: string | null
-          dependents?: Json
-          geo_economic_profile?: string | null
-          neighborhood?: string | null
-          age?: number | null
-          gender?: 'masculino' | 'feminino' | 'outro' | 'nao_informar' | null
-          marital_status?: 'solteiro' | 'casado' | 'divorciado' | 'viuvo' | 'uniao_estavel' | 'outro' | null
-          profession?: string | null
-          current_plan?: 'mensal' | 'bimestral' | 'trimestral' | 'semestral' | 'anual' | null
-          current_payment_method?: 'pix' | 'cartao_credito' | 'debito' | 'boleto' | 'recorrencia' | null
-          current_payment_status?: 'adimplente' | 'inadimplente' | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          company_id?: string
-          name?: string
-          cpf?: string | null
-          address?: string | null
-          phone?: string | null
-          email?: string | null
-          status?: 'ativo' | 'inativo' | 'cancelado'
-          cancellation_reason?: string | null
-          dependents?: Json
-          geo_economic_profile?: string | null
-          neighborhood?: string | null
-          age?: number | null
-          gender?: 'masculino' | 'feminino' | 'outro' | 'nao_informar' | null
-          marital_status?: 'solteiro' | 'casado' | 'divorciado' | 'viuvo' | 'uniao_estavel' | 'outro' | null
-          profession?: string | null
-          current_plan?: 'mensal' | 'bimestral' | 'trimestral' | 'semestral' | 'anual' | null
-          current_payment_method?: 'pix' | 'cartao_credito' | 'debito' | 'boleto' | 'recorrencia' | null
-          current_payment_status?: 'adimplente' | 'inadimplente' | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "students_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       student_flow: {
         Row: {
+          created_at: string | null
+          details: Json | null
           id: string
-          company_id: string
-          visitor_name: string
-          visit_type: 'visita_sem_aula' | 'visita_com_aula_agendada'
-          visit_date: string
-          converted_to_student: boolean
+          modality_id: string | null
+          secretaria_id: string | null
           student_id: string | null
-          notes: string | null
-          created_at: string
-          updated_at: string
+          type: string | null
         }
         Insert: {
+          created_at?: string | null
+          details?: Json | null
           id?: string
-          company_id: string
-          visitor_name: string
-          visit_type: 'visita_sem_aula' | 'visita_com_aula_agendada'
-          visit_date?: string
-          converted_to_student?: boolean
+          modality_id?: string | null
+          secretaria_id?: string | null
           student_id?: string | null
-          notes?: string | null
-          created_at?: string
-          updated_at?: string
+          type?: string | null
         }
         Update: {
+          created_at?: string | null
+          details?: Json | null
           id?: string
-          company_id?: string
-          visitor_name?: string
-          visit_type?: 'visita_sem_aula' | 'visita_com_aula_agendada'
-          visit_date?: string
-          converted_to_student?: boolean
+          modality_id?: string | null
+          secretaria_id?: string | null
           student_id?: string | null
-          notes?: string | null
-          created_at?: string
-          updated_at?: string
+          type?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "student_flow_company_id_fkey"
-            columns: ["company_id"]
+            foreignKeyName: "student_flow_modality_id_fkey"
+            columns: ["modality_id"]
             isOneToOne: false
-            referencedRelation: "companies"
+            referencedRelation: "modalities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_flow_secretaria_id_fkey"
+            columns: ["secretaria_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -395,126 +235,64 @@ export type Database = {
           },
         ]
       }
-      performance_rankings: {
+      students: {
         Row: {
+          cancel_reason: string | null
+          company_id: string | null
+          created_at: string | null
+          current_payment_method:
+            | Database["public"]["Enums"]["payment_method"]
+            | null
+          current_payment_status:
+            | Database["public"]["Enums"]["payment_status"]
+            | null
+          current_plan: Database["public"]["Enums"]["plan_type"] | null
           id: string
-          company_id: string
-          student_id: string
-          trainer_id: string
-          evaluation_date: string
-          score: number
-          technique_score: number | null
-          load_score: number | null
-          attendance_score: number | null
-          notes: string | null
-          created_at: string
-          updated_at: string
+          name: string
+          neighborhood: string | null
+          status: string | null
+          strategic_data: Json | null
         }
         Insert: {
+          cancel_reason?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          current_payment_method?:
+            | Database["public"]["Enums"]["payment_method"]
+            | null
+          current_payment_status?:
+            | Database["public"]["Enums"]["payment_status"]
+            | null
+          current_plan?: Database["public"]["Enums"]["plan_type"] | null
           id?: string
-          company_id: string
-          student_id: string
-          trainer_id: string
-          evaluation_date?: string
-          score: number
-          technique_score?: number | null
-          load_score?: number | null
-          attendance_score?: number | null
-          notes?: string | null
-          created_at?: string
-          updated_at?: string
+          name: string
+          neighborhood?: string | null
+          status?: string | null
+          strategic_data?: Json | null
         }
         Update: {
+          cancel_reason?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          current_payment_method?:
+            | Database["public"]["Enums"]["payment_method"]
+            | null
+          current_payment_status?:
+            | Database["public"]["Enums"]["payment_status"]
+            | null
+          current_plan?: Database["public"]["Enums"]["plan_type"] | null
           id?: string
-          company_id?: string
-          student_id?: string
-          trainer_id?: string
-          evaluation_date?: string
-          score?: number
-          technique_score?: number | null
-          load_score?: number | null
-          attendance_score?: number | null
-          notes?: string | null
-          created_at?: string
-          updated_at?: string
+          name?: string
+          neighborhood?: string | null
+          status?: string | null
+          strategic_data?: Json | null
         }
         Relationships: [
           {
-            foreignKeyName: "performance_rankings_company_id_fkey"
+            foreignKeyName: "students_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "performance_rankings_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "students"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "performance_rankings_trainer_id_fkey"
-            columns: ["trainer_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      parking_logs: {
-        Row: {
-          id: string
-          company_id: string
-          student_id: string | null
-          student_name: string
-          license_plate: string
-          entry_time: string
-          exit_time: string | null
-          status: 'entrada' | 'saida'
-          notes: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          company_id: string
-          student_id?: string | null
-          student_name: string
-          license_plate: string
-          entry_time?: string
-          exit_time?: string | null
-          status?: 'entrada' | 'saida'
-          notes?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          company_id?: string
-          student_id?: string | null
-          student_name?: string
-          license_plate?: string
-          entry_time?: string
-          exit_time?: string | null
-          status?: 'entrada' | 'saida'
-          notes?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "parking_logs_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "parking_logs_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "students"
             referencedColumns: ["id"]
           },
         ]
@@ -527,7 +305,9 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      payment_method: "pix" | "credito" | "debito" | "boleto" | "recorrencia"
+      payment_status: "adimplente" | "inadimplente"
+      plan_type: "mensal" | "bimestral" | "trimestral" | "semestral" | "anual"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -654,6 +434,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      payment_method: ["pix", "credito", "debito", "boleto", "recorrencia"],
+      payment_status: ["adimplente", "inadimplente"],
+      plan_type: ["mensal", "bimestral", "trimestral", "semestral", "anual"],
+    },
   },
 } as const
