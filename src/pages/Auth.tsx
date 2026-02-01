@@ -46,6 +46,27 @@ const Auth = () => {
   // Default role is 'empresa' as most users signing up are companies seeking certifications
   const selectedRole = "empresa";
 
+  // Helper function to check and sign out if profile is missing after 5 seconds
+  const scheduleProfileCheck = (userId: string, contextLabel: string): NodeJS.Timeout => {
+    return setTimeout(async () => {
+      // Check again if profile exists after 5 seconds
+      const { data: profileCheck } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("user_id", userId)
+        .single();
+      
+      if (!profileCheck && !isCreatingProfileRef.current) {
+        console.log(`No profile found after 5 seconds (${contextLabel}), executing automatic sign out`);
+        try {
+          await supabase.auth.signOut();
+        } catch (signOutError) {
+          console.error("Error during session cleanup:", signOutError);
+        }
+      }
+    }, 5000);
+  };
+
   useEffect(() => {
     let authTimeoutId: NodeJS.Timeout | null = null;
     let mountTimeoutId: NodeJS.Timeout | null = null;
@@ -70,23 +91,7 @@ const Auth = () => {
         } else if (session?.user && !profile && !isCreatingProfileRef.current) {
           // User is logged in but has no profile - wait 5 seconds then sign out to prevent infinite redirect loop
           console.log("User logged in without profile, waiting 5 seconds before automatic sign out");
-          authTimeoutId = setTimeout(async () => {
-            // Check again if profile exists after 5 seconds
-            const { data: profileCheck } = await supabase
-              .from("profiles")
-              .select("id")
-              .eq("user_id", session.user.id)
-              .single();
-            
-            if (!profileCheck && !isCreatingProfileRef.current) {
-              console.log("No profile found after 5 seconds, executing automatic sign out");
-              try {
-                await supabase.auth.signOut();
-              } catch (signOutError) {
-                console.error("Error during session cleanup:", signOutError);
-              }
-            }
-          }, 5000);
+          authTimeoutId = scheduleProfileCheck(session.user.id, "auth state change");
         }
       }
     });
@@ -109,23 +114,7 @@ const Auth = () => {
         } else if (session?.user && !profile && !isCreatingProfileRef.current) {
           // User is logged in but has no profile - wait 5 seconds then sign out to prevent infinite redirect loop
           console.log("User logged in without profile (on mount), waiting 5 seconds before automatic sign out");
-          mountTimeoutId = setTimeout(async () => {
-            // Check again if profile exists after 5 seconds
-            const { data: profileCheck } = await supabase
-              .from("profiles")
-              .select("id")
-              .eq("user_id", session.user.id)
-              .single();
-            
-            if (!profileCheck && !isCreatingProfileRef.current) {
-              console.log("No profile found after 5 seconds (on mount), executing automatic sign out");
-              try {
-                await supabase.auth.signOut();
-              } catch (signOutError) {
-                console.error("Error during session cleanup:", signOutError);
-              }
-            }
-          }, 5000);
+          mountTimeoutId = scheduleProfileCheck(session.user.id, "on mount");
         }
       }
     });
@@ -337,7 +326,11 @@ const Auth = () => {
       ]);
     } catch (error) {
       // Mandatory ejection on failure - first action must be signOut
-      await supabase.auth.signOut();
+      try {
+        await supabase.auth.signOut();
+      } catch (signOutError) {
+        console.error("Error during mandatory signOut:", signOutError);
+      }
       
       console.error('ERRO REAL DO BANCO:', error);
       
