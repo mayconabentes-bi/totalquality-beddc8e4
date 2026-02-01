@@ -57,11 +57,13 @@ const Auth = () => {
         .single();
       
       if (!profileCheck && !isCreatingProfileRef.current) {
-        console.log(`No profile found after 5 seconds (${contextLabel}), executing automatic sign out`);
+        if (import.meta.env.DEV) {
+          console.log(`No profile found after 5 seconds (${contextLabel}), executing automatic sign out`);
+        }
         try {
           await supabase.auth.signOut();
-        } catch (signOutError) {
-          console.error("Error during session cleanup:", signOutError);
+        } catch {
+          // Silent cleanup - error details not exposed in production
         }
       }
     }, 5000);
@@ -82,7 +84,7 @@ const Auth = () => {
           .eq("user_id", session.user.id)
           .single();
         
-        if (error) {
+        if (error && import.meta.env.DEV) {
           console.error("Error checking profile:", error);
         }
         
@@ -90,7 +92,6 @@ const Auth = () => {
           navigate("/dashboard");
         } else if (session?.user && !profile && !isCreatingProfileRef.current) {
           // User is logged in but has no profile - wait 5 seconds then sign out to prevent infinite redirect loop
-          console.log("User logged in without profile, waiting 5 seconds before automatic sign out");
           authTimeoutId = scheduleProfileCheck(session.user.id, "auth state change");
         }
       }
@@ -105,7 +106,7 @@ const Auth = () => {
           .eq("user_id", session.user.id)
           .single();
         
-        if (error) {
+        if (error && import.meta.env.DEV) {
           console.error("Error checking profile:", error);
         }
         
@@ -113,7 +114,6 @@ const Auth = () => {
           navigate("/dashboard");
         } else if (session?.user && !profile && !isCreatingProfileRef.current) {
           // User is logged in but has no profile - wait 5 seconds then sign out to prevent infinite redirect loop
-          console.log("User logged in without profile (on mount), waiting 5 seconds before automatic sign out");
           mountTimeoutId = scheduleProfileCheck(session.user.id, "on mount");
         }
       }
@@ -169,7 +169,7 @@ const Auth = () => {
     e.preventDefault();
     clearErrors();
 
-    console.log('Iniciando cadastro...');
+    // Signup initiation - no logging in production
 
     const result = signupSchema.safeParse({ 
       fullName, 
@@ -245,15 +245,14 @@ const Auth = () => {
                 })
                 .select()
                 .single()
-                .then(result => {
+              .then(result => {
                   clearTimeout(timeoutId);
-                  // Log the result for debugging database errors
-                  console.log("Company insert result:", result);
                   resolve(result);
                 }, error => {
                   clearTimeout(timeoutId);
-                  // Log the error for debugging (e.g., missing column or RLS policy violation)
-                  console.error("Erro Detalhado Banco:", error);
+                  if (import.meta.env.DEV) {
+                    console.error("Company insert error:", error);
+                  }
                   reject(error);
                 });
             });
@@ -264,18 +263,21 @@ const Auth = () => {
             };
 
             if (companyError) {
-              console.error("Erro Detalhado Banco:", companyError);
-              throw new Error(`Erro ao registrar empresa: ${companyError.message}`);
+              if (import.meta.env.DEV) {
+                console.error("Company error:", companyError);
+              }
+              throw new Error("Erro ao registrar empresa. Por favor, tente novamente.");
             }
 
             if (!resultData) {
-              throw new Error("Erro ao registrar empresa: dados não retornados");
+              throw new Error("Erro ao registrar empresa. Por favor, tente novamente.");
             }
             
             companyData = resultData;
           } catch (companyInsertError) {
-            // Log detailed error and re-throw to main catch block
-            console.error("Erro Detalhado Banco:", companyInsertError);
+            if (import.meta.env.DEV) {
+              console.error("Company insert error:", companyInsertError);
+            }
             throw companyInsertError;
           }
 
@@ -326,11 +328,13 @@ const Auth = () => {
       // Mandatory ejection on failure - first action must be signOut
       try {
         await supabase.auth.signOut();
-      } catch (signOutError) {
-        console.error("Error during mandatory signOut:", signOutError);
+      } catch {
+        // Silent cleanup - error details not exposed in production
       }
       
-      console.error('ERRO REAL DO BANCO:', error);
+      if (import.meta.env.DEV) {
+        console.error("Signup error:", error);
+      }
       
       // Check if error is from the overall timeout
       const errorMessage = error instanceof Error ? error.message : String(error);

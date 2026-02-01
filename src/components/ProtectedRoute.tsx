@@ -48,7 +48,10 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
           }
         }
       } catch (error) {
-        console.error("Erro na verificação de rota:", error);
+        // Only log in development to avoid exposing route protection logic
+        if (import.meta.env.DEV) {
+          console.error("Route verification error:", error);
+        }
       } finally {
         if (isMounted) setIsLoading(false);
       }
