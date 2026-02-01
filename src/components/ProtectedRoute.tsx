@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: ("auditor" | "empresa" | "total_quality_iso")[];
+  allowedRoles?: ("auditor" | "empresa" | "total_quality_iso" | "master")[];
 }
 
 const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
@@ -36,7 +36,14 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
               .eq("user_id", session.user.id)
               .single();
 
-            if (error || !profile || !allowedRoles.includes(profile.role as "auditor" | "empresa" | "total_quality_iso")) {
+            // Superuser logic: 'master' role bypasses all restrictions
+            if (error || !profile) {
+              toast.error("Acesso negado para esta modalidade.");
+              if (isMounted) setAuthorized(false);
+            } else if (profile.role === 'master') {
+              // Master role has automatic access to any protected route
+              if (isMounted) setAuthorized(true);
+            } else if (!allowedRoles.includes(profile.role as "auditor" | "empresa" | "total_quality_iso" | "master")) {
               toast.error("Acesso negado para esta modalidade.");
               if (isMounted) setAuthorized(false);
             } else {

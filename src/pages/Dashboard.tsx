@@ -15,7 +15,8 @@ import {
   Plus,
   TrendingUp,
   AlertTriangle,
-  Calendar
+  Calendar,
+  ShieldCheck
 } from "lucide-react";
 import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
@@ -202,6 +203,14 @@ const Dashboard = () => {
             <QuickActionCard icon={Users} label="Treinamento" />
             <QuickActionCard icon={BarChart3} label="Indicadores" />
             <QuickActionCard icon={Calendar} label="Agenda" />
+            {/* Master Panel - Only visible for master users */}
+            {profile?.role === 'master' && (
+              <QuickActionCard 
+                icon={ShieldCheck} 
+                label="Painel Master" 
+                onClick={() => navigate("/admin")}
+              />
+            )}
           </div>
         </div>
 
@@ -211,8 +220,8 @@ const Dashboard = () => {
             Módulos do Sistema
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Documentos - Hidden for 'auditor' role */}
-            {profile?.role !== 'auditor' && (
+            {/* Documentos - Master role can see all modules; other roles: hidden for 'auditor' */}
+            {(profile?.role === 'master' || profile?.role !== 'auditor') && (
               <ModuleCard 
                 icon={FileText}
                 title="Documentos"
@@ -226,8 +235,8 @@ const Dashboard = () => {
               description="Registre e trate não conformidades"
               items={["0 abertas", "0 em tratamento"]}
             />
-            {/* Auditorias - Hidden for 'empresa' role */}
-            {profile?.role !== 'empresa' && (
+            {/* Auditorias - Master role can see all modules; other roles: hidden for 'empresa' */}
+            {(profile?.role === 'master' || profile?.role !== 'empresa') && (
               <ModuleCard 
                 icon={ClipboardCheck}
                 title="Auditorias"
@@ -247,8 +256,8 @@ const Dashboard = () => {
               description="Gerencie competências e capacitações"
               items={["0 treinamentos", "0 vencendo"]}
             />
-            {/* Configurações - Hidden for 'empresa' role */}
-            {profile?.role !== 'empresa' && (
+            {/* Configurações - Master role can see all modules; other roles: hidden for 'empresa' */}
+            {(profile?.role === 'master' || profile?.role !== 'empresa') && (
               <ModuleCard 
                 icon={Building2}
                 title="Configurações"
@@ -289,10 +298,14 @@ const StatCard = ({ icon: Icon, value, label, trend, color }: StatCardProps) => 
 interface QuickActionCardProps {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
+  onClick?: () => void;
 }
 
-const QuickActionCard = ({ icon: Icon, label }: QuickActionCardProps) => (
-  <button className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card border border-border/50 shadow-soft hover:shadow-medium hover:-translate-y-1 transition-all group">
+const QuickActionCard = ({ icon: Icon, label, onClick }: QuickActionCardProps) => (
+  <button 
+    onClick={onClick}
+    className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card border border-border/50 shadow-soft hover:shadow-medium hover:-translate-y-1 transition-all group"
+  >
     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
       <Icon className="w-5 h-5 text-primary" />
     </div>

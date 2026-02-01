@@ -208,5 +208,45 @@ describe("ProtectedRoute", () => {
       expect(screen.queryByText("Protected Content")).not.toBeInTheDocument();
     });
   });
+
+  it("should allow master role to bypass all role restrictions", async () => {
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({
+      data: {
+        session: createMockSession("user-master"),
+      },
+      error: null,
+    });
+
+    const mockSelect = vi.fn().mockReturnThis();
+    const mockEq = vi.fn().mockReturnThis();
+    const mockSingle = vi.fn().mockResolvedValue({
+      data: { role: "master" },
+      error: null,
+    });
+
+    vi.mocked(supabase.from).mockReturnValue({
+      select: mockSelect,
+      eq: mockEq,
+      single: mockSingle,
+    } as never);
+
+    mockSelect.mockReturnValue({ eq: mockEq });
+    mockEq.mockReturnValue({ single: mockSingle });
+
+    render(
+      <BrowserRouter>
+        <ProtectedRoute allowedRoles={["auditor"]}>
+          <TestChild />
+        </ProtectedRoute>
+      </BrowserRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Protected Content")).toBeInTheDocument();
+    });
+
+    // Master role should not trigger error toast
+    expect(toast.error).not.toHaveBeenCalled();
+  });
 });
 

@@ -239,4 +239,66 @@ describe("Dashboard - Role-based Visibility", () => {
     );
     expect(auditoriasModuleCard).toBeDefined();
   });
+
+  it("should show all modules and Painel Master for master role", async () => {
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({
+      data: {
+        session: createMockSession("user-master"),
+      },
+      error: null,
+    });
+
+    const mockSelect = vi.fn().mockReturnThis();
+    const mockEq = vi.fn().mockReturnThis();
+    const mockSingle = vi.fn()
+      .mockResolvedValueOnce({
+        data: {
+          id: "profile-master",
+          full_name: "Master User",
+          role: "master",
+          company_id: null,
+        },
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        data: null,
+        error: null,
+      });
+
+    vi.mocked(supabase.from).mockReturnValue({
+      select: mockSelect,
+      eq: mockEq,
+      single: mockSingle,
+    } as never);
+
+    mockSelect.mockReturnValue({ eq: mockEq });
+    mockEq.mockReturnValue({ single: mockSingle });
+
+    render(
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/Master User/)).toBeInTheDocument();
+    });
+
+    // Check that ALL module cards are shown for master
+    expect(screen.getByRole("heading", { name: "Documentos", level: 3 })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Configurações", level: 3 })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Não Conformidades", level: 3 })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Indicadores", level: 3 })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Treinamentos", level: 3 })).toBeInTheDocument();
+    
+    // Auditorias appears in multiple places, check for the module card
+    const auditoriasCards = screen.getAllByText("Auditorias");
+    const auditoriasModuleCard = auditoriasCards.find(el => 
+      el.className.includes("font-display") && el.tagName === "H3"
+    );
+    expect(auditoriasModuleCard).toBeDefined();
+
+    // Check that Painel Master quick action is shown
+    expect(screen.getByText("Painel Master")).toBeInTheDocument();
+  });
 });
