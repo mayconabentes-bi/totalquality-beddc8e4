@@ -16,7 +16,10 @@ import {
   TrendingUp,
   AlertTriangle,
   Calendar,
-  ShieldCheck
+  ShieldCheck,
+  ShieldAlert,
+  Wrench,
+  MessageSquare
 } from "lucide-react";
 import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
@@ -265,6 +268,36 @@ const Dashboard = () => {
                 items={["Perfil", "Usuários"]}
               />
             )}
+            {/* Gestão de Riscos - Master and proprietario can see */}
+            {(profile?.role === 'master' || profile?.role === 'proprietario') && (
+              <ModuleCard 
+                icon={ShieldAlert}
+                title="Gestão de Riscos"
+                description="Matriz de riscos e planos de mitigação"
+                items={["0 riscos", "ISO 9001"]}
+                onClick={() => navigate("/riscos")}
+              />
+            )}
+            {/* Manutenção - Master, proprietario, and manutencao can see */}
+            {(profile?.role === 'master' || profile?.role === 'proprietario' || profile?.role === 'manutencao') && (
+              <ModuleCard 
+                icon={Wrench}
+                title="Manutenção"
+                description="Gestão de ativos e manutenções"
+                items={["0 ativos", "0 alertas"]}
+                onClick={() => navigate("/manutencao")}
+              />
+            )}
+            {/* Voz do Aluno (NPS) - Master, proprietario, and recepcionista can see */}
+            {(profile?.role === 'master' || profile?.role === 'proprietario' || profile?.role === 'recepcionista') && (
+              <ModuleCard 
+                icon={MessageSquare}
+                title="Voz do Aluno"
+                description="Net Promoter Score e feedbacks"
+                items={["0 respostas", "NPS: 0"]}
+                onClick={() => navigate("/nps")}
+              />
+            )}
           </div>
         </div>
       </main>
@@ -318,10 +351,14 @@ interface ModuleCardProps {
   title: string;
   description: string;
   items: string[];
+  onClick?: () => void;
 }
 
-const ModuleCard = ({ icon: Icon, title, description, items }: ModuleCardProps) => (
-  <div className="bg-card rounded-2xl border border-border/50 p-6 shadow-soft hover:shadow-medium transition-all group cursor-pointer">
+const ModuleCard = ({ icon: Icon, title, description, items, onClick }: ModuleCardProps) => (
+  <div 
+    className="bg-card rounded-2xl border border-border/50 p-6 shadow-soft hover:shadow-medium transition-all group cursor-pointer"
+    onClick={onClick}
+  >
     <div className="flex items-start justify-between mb-4">
       <div className="w-12 h-12 rounded-xl gradient-bg flex items-center justify-center shadow-soft group-hover:scale-110 transition-transform">
         <Icon className="w-6 h-6 text-primary-foreground" />

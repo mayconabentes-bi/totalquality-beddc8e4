@@ -100,6 +100,132 @@ export type Database = {
           },
         ]
       }
+      risks: {
+        Row: {
+          id: string
+          company_id: string
+          description: string
+          category: 'Operacional' | 'Financeiro' | 'Mercado'
+          probability: number
+          impact: number
+          mitigation_plan: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          description: string
+          category: 'Operacional' | 'Financeiro' | 'Mercado'
+          probability: number
+          impact: number
+          mitigation_plan?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          description?: string
+          category?: 'Operacional' | 'Financeiro' | 'Mercado'
+          probability?: number
+          impact?: number
+          mitigation_plan?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "risks_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_assets: {
+        Row: {
+          id: string
+          company_id: string
+          name: string
+          category: string
+          last_maintenance: string | null
+          next_maintenance: string | null
+          status: 'Ok' | 'Alerta' | 'Crítico'
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          name: string
+          category: string
+          last_maintenance?: string | null
+          next_maintenance?: string | null
+          status: 'Ok' | 'Alerta' | 'Crítico'
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          name?: string
+          category?: string
+          last_maintenance?: string | null
+          next_maintenance?: string | null
+          status?: 'Ok' | 'Alerta' | 'Crítico'
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_assets_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nps_feedback: {
+        Row: {
+          id: string
+          company_id: string
+          score: number
+          comment: string | null
+          student_name: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          score: number
+          comment?: string | null
+          student_name?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          score?: number
+          comment?: string | null
+          student_name?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nps_feedback_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
