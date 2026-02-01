@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { CheckCircle, ArrowLeft, Loader2, Building2, User, Mail, Lock, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -36,6 +37,7 @@ const Auth = () => {
   const [fullName, setFullName] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [phone, setPhone] = useState("");
+  const [selectedRole, setSelectedRole] = useState("empresa");
 
   useEffect(() => {
     // Check if user is already logged in
@@ -163,6 +165,7 @@ const Auth = () => {
           user_id: authData.user.id,
           full_name: fullName.trim(),
           company_id: companyData?.id || null,
+          role: selectedRole,
         });
 
       if (profileError) {
@@ -284,6 +287,51 @@ const Auth = () => {
                     className="pl-10"
                   />
                 </div>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium">
+                  Modalidade <span className="text-destructive">*</span>
+                </Label>
+                <RadioGroup 
+                  value={selectedRole} 
+                  onValueChange={setSelectedRole}
+                  className="mt-3 space-y-3"
+                >
+                  <div className="flex items-start space-x-3 rounded-lg border border-border p-4 hover:bg-accent/50 transition-colors">
+                    <RadioGroupItem value="empresa" id="empresa" className="mt-1" />
+                    <div className="flex-1">
+                      <Label htmlFor="empresa" className="text-sm font-semibold cursor-pointer">
+                        Empresa (Cliente)
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Empresas que buscam certificações ISO e auditoria de qualidade
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3 rounded-lg border border-border p-4 hover:bg-accent/50 transition-colors">
+                    <RadioGroupItem value="auditor" id="auditor" className="mt-1" />
+                    <div className="flex-1">
+                      <Label htmlFor="auditor" className="text-sm font-semibold cursor-pointer">
+                        Auditor
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Profissionais responsáveis por realizar auditorias e avaliações
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3 rounded-lg border border-border p-4 hover:bg-accent/50 transition-colors">
+                    <RadioGroupItem value="totalquality" id="totalquality" className="mt-1" />
+                    <div className="flex-1">
+                      <Label htmlFor="totalquality" className="text-sm font-semibold cursor-pointer">
+                        Total Quality ISO
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Administradores da plataforma Total Quality ISO
+                      </p>
+                    </div>
+                  </div>
+                </RadioGroup>
               </div>
 
               <div>
