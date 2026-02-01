@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,7 @@ const Auth = () => {
   const [mode, setMode] = useState<AuthMode>("signup");
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isCreatingProfile, setIsCreatingProfile] = useState(false);
+  const isCreatingProfileRef = useRef(false);
   
   // Form state
   const [email, setEmail] = useState("");
@@ -45,7 +45,7 @@ const Auth = () => {
     // Check if user is already logged in
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       // Only redirect if we have a session and we're not currently creating a profile
-      if (session?.user && !isCreatingProfile) {
+      if (session?.user && !isCreatingProfileRef.current) {
         // Verify profile exists before redirecting
         const { data: profile } = await supabase
           .from("profiles")
@@ -60,7 +60,7 @@ const Auth = () => {
     });
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user && !isCreatingProfile) {
+      if (session?.user && !isCreatingProfileRef.current) {
         // Verify profile exists before redirecting
         const { data: profile } = await supabase
           .from("profiles")
@@ -75,7 +75,7 @@ const Auth = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, isCreatingProfile]);
+  }, [navigate]);
 
   const clearErrors = () => setErrors({});
 
@@ -138,7 +138,7 @@ const Auth = () => {
     }
 
     setLoading(true);
-    setIsCreatingProfile(true);
+    isCreatingProfileRef.current = true;
 
     const redirectUrl = `${window.location.origin}/dashboard`;
 
@@ -179,7 +179,7 @@ const Auth = () => {
 
         if (companyError) {
           console.error("Error creating company:", companyError);
-          toast.error("Erro ao criar registro da empresa");
+          toast.error("Erro ao criar registro da empresa. Por favor, entre em contato com o suporte.");
           return;
         }
 
@@ -195,7 +195,7 @@ const Auth = () => {
 
         if (profileError) {
           console.error("Error creating profile:", profileError);
-          toast.error("Erro ao criar perfil");
+          toast.error("Erro ao criar perfil. Por favor, entre em contato com o suporte.");
           return;
         }
 
@@ -204,7 +204,7 @@ const Auth = () => {
       }
     } finally {
       setLoading(false);
-      setIsCreatingProfile(false);
+      isCreatingProfileRef.current = false;
     }
   };
 
