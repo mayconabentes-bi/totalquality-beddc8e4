@@ -154,8 +154,12 @@ const Auth = () => {
     setLoading(true);
     isCreatingProfileRef.current = true;
 
+    let userCreated = false;
+    let failedStep = "";
+
     try {
       // Step 1: Create user account with authentication
+      failedStep = "autenticação";
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: email.trim(),
         password,
@@ -163,10 +167,22 @@ const Auth = () => {
 
       if (signUpError) throw signUpError;
 
-      if (authData.user) {
-        // Step 2: Create company record immediately and capture the id
-        // Use the normalized CNPJ from validation result (without formatting)
-        const { data: companyData, error: companyError } = await supabase
+      if (!authData.user) {
+        throw new Error("Falha ao criar usuário. Por favor, tente novamente.");
+      }
+
+      userCreated = true;
+
+      // Step 2: Create company record with timeout
+      failedStep = "registro da empresa";
+      
+      // Add 10 second timeout for company insertion
+      const companyResult = await new Promise<unknown>((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          reject(new Error("Timeout ao criar empresa (10s)"));
+        }, 10000);
+
+        supabase
           .from("companies")
           .insert({
             user_id: authData.user.id,
@@ -175,37 +191,92 @@ const Auth = () => {
             phone: phone.trim() || null,
           })
           .select()
-          .single();
+          .single()
+          .then(result => {
+            clearTimeout(timeoutId);
+            resolve(result);
+          })
+          .catch(error => {
+            clearTimeout(timeoutId);
+            reject(error);
+          });
+      });
 
-        if (companyError) {
-          throw new Error(`Erro ao registrar empresa: ${companyError.message}`);
-        }
+      const { data: companyData, error: companyError } = companyResult as {
+        data: { id: string } | null;
+        error: { message: string } | null;
+      };
 
-        // Step 3: Create profile with company_id link
-        const { error: profileError } = await supabase
+      if (companyError) {
+        throw new Error(`Erro ao registrar empresa: ${companyError.message}`);
+      }
+
+      if (!companyData) {
+        throw new Error("Erro ao registrar empresa: dados não retornados");
+      }
+
+      // Step 3: Create profile with company_id link and timeout
+      failedStep = "criação do perfil";
+      
+      // Add 10 second timeout for profile creation
+      const profileResult = await new Promise<unknown>((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          reject(new Error("Timeout ao criar perfil (10s)"));
+        }, 10000);
+
+        supabase
           .from("profiles")
           .insert({
             user_id: authData.user.id,
             full_name: fullName.trim(),
             company_id: companyData.id,
             role: selectedRole,
+          })
+          .then(result => {
+            clearTimeout(timeoutId);
+            resolve(result);
+          })
+          .catch(error => {
+            clearTimeout(timeoutId);
+            reject(error);
           });
+      });
 
-        if (profileError) {
-          throw new Error(`Erro ao configurar perfil: ${profileError.message}`);
-        }
+      const { error: profileError } = profileResult as {
+        error: { message: string } | null;
+      };
 
-        // Success - user account, company, and profile created successfully
-        toast.success("Conta criada com sucesso! Verifique seu email para confirmar.");
-        setMode("login");
+      if (profileError) {
+        throw new Error(`Erro ao configurar perfil: ${profileError.message}`);
       }
+
+      // Success - user account, company, and profile created successfully
+      toast.success("Conta criada com sucesso! Verifique seu email para confirmar.");
+      setMode("login");
     } catch (error) {
       console.error("Registration error:", error);
       
-      // Provide user-friendly error messages
+      // If user was created but company/profile failed, sign them out immediately
+      // to avoid "dirty" sessions without complete profile
+      if (userCreated) {
+        try {
+          console.log("Cleaning up: signing out user due to incomplete registration");
+          await supabase.auth.signOut();
+        } catch (signOutError) {
+          console.error("Error during cleanup signOut:", signOutError);
+          // Continue to show the original error to the user
+        }
+      }
+      
+      // Provide user-friendly error messages with clear step indication
       const errorMessage = error instanceof Error ? error.message : String(error);
+      
       if (errorMessage.includes("already registered") || errorMessage.includes("User already registered")) {
         toast.error("Este email já está cadastrado. Faça login ou use outro email.");
+      } else if (errorMessage.includes("Timeout")) {
+        toast.error(`Operação demorou muito (${failedStep}). Por favor, tente novamente.`);
+      } else if (failedStep) {
+        toast.error(`Erro na etapa de ${failedStep}: ${errorMessage}`);
       } else {
         toast.error(errorMessage);
       }
