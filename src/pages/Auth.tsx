@@ -161,11 +161,16 @@ const Auth = () => {
         // Step 2: Create company record immediately and capture the id
         const { data: companyData, error: companyError } = await supabase
           .from("companies")
-          .insert([{ name: companyName.trim() }])
+          .insert({
+            name: companyName.trim(),
+            phone: phone.trim() || null,
+          })
           .select()
           .single();
 
-        if (companyError) throw new Error("Erro ao registrar empresa");
+        if (companyError) {
+          throw new Error(`Erro ao registrar empresa: ${companyError.message}`);
+        }
 
         // Step 3: Create profile with company_id link
         const { error: profileError } = await supabase
@@ -177,9 +182,11 @@ const Auth = () => {
             company_id: companyData.id,
           });
 
-        if (profileError) throw new Error("Erro ao configurar perfil");
+        if (profileError) {
+          throw new Error(`Erro ao configurar perfil: ${profileError.message}`);
+        }
 
-        // Success - user account, company, and profile created atomically
+        // Success - user account, company, and profile created with unified error handling
         toast.success("Conta criada com sucesso! Verifique seu email para confirmar.");
         setMode("login");
       }
