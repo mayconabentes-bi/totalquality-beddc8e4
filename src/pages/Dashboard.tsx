@@ -138,9 +138,15 @@ const Dashboard = () => {
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-accent rounded-full" />
               </Button>
-              <Button variant="ghost" size="icon">
-                <Settings className="w-5 h-5" />
-              </Button>
+              {(profile?.role === 'master' || profile?.role === 'proprietario') && (
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={() => navigate("/configuracoes")}
+                >
+                  <Settings className="w-5 h-5" />
+                </Button>
+              )}
               <Button variant="ghost" onClick={handleLogout} className="text-muted-foreground">
                 <LogOut className="w-4 h-4 mr-2" />
                 Sair

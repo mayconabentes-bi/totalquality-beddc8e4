@@ -2,14 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { 
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -37,11 +29,12 @@ import {
   CheckCircle, 
   LogOut, 
   ArrowLeft,
+  Settings2,
   Brain,
-  LineChart,
-  Settings2
+  LineChart
 } from "lucide-react";
 import { toast } from "sonner";
+import { User } from "@supabase/supabase-js";
 
 interface Company {
   id: string;
@@ -49,6 +42,13 @@ interface Company {
   cnpj: string | null;
   market_intelligence: unknown;
   statistical_studies: unknown;
+}
+
+interface Profile {
+  id: string;
+  full_name: string | null;
+  role: string | null;
+  company_id: string | null;
 }
 
 interface MarketIntelligence {
@@ -67,12 +67,13 @@ interface StatisticalStudies {
   ebitda_projetado?: number;
 }
 
-const Admin = () => {
+const Settings = () => {
   const navigate = useNavigate();
-  const [companies, setCompanies] = useState<Company[]>([]);
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   
   // Form state for Market Intelligence
   const [cnaePrincipal, setCnaePrincipal] = useState("");
@@ -89,24 +90,54 @@ const Admin = () => {
   const [ebitdaProjetado, setEbitdaProjetado] = useState("");
 
   useEffect(() => {
-    fetchCompanies();
-  }, []);
-
-  const fetchCompanies = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("companies")
-        .select("id, name, cnpj, market_intelligence, statistical_studies")
-        .order("name");
-
-      if (error) {
-        toast.error("Erro ao carregar empresas");
-        console.error("Error fetching companies:", error);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+      if (!session?.user) {
+        navigate("/auth");
       } else {
-        setCompanies(data || []);
+        fetchUserData(session.user.id);
+      }
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (!session?.user) {
+        navigate("/auth");
+      } else {
+        fetchUserData(session.user.id);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  const fetchUserData = async (userId: string) => {
+    try {
+      // Fetch profile
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
+
+      if (profileData) {
+        setProfile(profileData);
+
+        // Fetch company if profile has company_id
+        if (profileData.company_id) {
+          const { data: companyData } = await supabase
+            .from("companies")
+            .select("*")
+            .eq("id", profileData.company_id)
+            .single();
+
+          if (companyData) {
+            setCompany(companyData);
+          }
+        }
       }
     } catch (error) {
-      console.error("Error fetching companies:", error);
+      console.error("Error fetching user data:", error);
     } finally {
       setLoading(false);
     }
@@ -124,8 +155,8 @@ const Admin = () => {
     return true;
   };
 
-  const openEditDialog = (company: Company) => {
-    setSelectedCompany(company);
+  const openEditDialog = () => {
+    if (!company) return;
     
     // Load market intelligence data
     const mi = company.market_intelligence as MarketIntelligence | null;
@@ -147,7 +178,7 @@ const Admin = () => {
   };
 
   const handleSaveData = async () => {
-    if (!selectedCompany) return;
+    if (!company) return;
 
     try {
       // Prepare market intelligence object
@@ -175,7 +206,7 @@ const Admin = () => {
           market_intelligence: marketIntelligence,
           statistical_studies: statisticalStudies,
         })
-        .eq("id", selectedCompany.id);
+        .eq("id", company.id);
 
       if (error) {
         toast.error("Erro ao salvar dados");
@@ -183,7 +214,10 @@ const Admin = () => {
       } else {
         toast.success("Dados salvos com sucesso!");
         setEditDialogOpen(false);
-        fetchCompanies(); // Refresh the list
+        // Refresh company data
+        if (user) {
+          fetchUserData(user.id);
+        }
       }
     } catch (error) {
       console.error("Error saving data:", error);
@@ -240,75 +274,64 @@ const Admin = () => {
         {/* Page Title */}
         <div className="mb-8">
           <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground mb-2">
-            Painel Central de Gestão
+            Configurações da Empresa
           </h1>
           <p className="text-muted-foreground">
-            Visão geral de todas as empresas cadastradas no sistema
+            Gerencie os dados de Inteligência de Mercado e Estudos Estatísticos
           </p>
         </div>
 
-        {/* Companies Table */}
-        <div className="bg-card rounded-xl border border-border/50 shadow-soft">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome da Empresa</TableHead>
-                <TableHead>CNPJ</TableHead>
-                <TableHead className="text-center" aria-label="Status de Inteligência de Mercado">Inteligência de Mercado</TableHead>
-                <TableHead className="text-center" aria-label="Status de Estudos Estatísticos">Estudos Estatísticos</TableHead>
-                <TableHead className="text-center">Gestão</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {companies.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                    Nenhuma empresa cadastrada
-                  </TableCell>
-                </TableRow>
-              ) : (
-                companies.map((company) => (
-                  <TableRow key={company.id}>
-                    <TableCell className="font-medium">{company.name}</TableCell>
-                    <TableCell>{company.cnpj || "—"}</TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex justify-center">
-                        <Brain 
-                          className={`w-5 h-5 ${
-                            hasData(company.market_intelligence)
-                              ? "text-primary"
-                              : "text-muted-foreground/30"
-                          }`}
-                        />
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex justify-center">
-                        <LineChart 
-                          className={`w-5 h-5 ${
-                            hasData(company.statistical_studies)
-                              ? "text-accent"
-                              : "text-muted-foreground/30"
-                          }`}
-                        />
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openEditDialog(company)}
-                        className="gap-2"
-                      >
-                        <Settings2 className="w-4 h-4" />
-                        Editar Dados Axioma
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+        {/* Company Info Card */}
+        <div className="bg-card rounded-xl border border-border/50 shadow-soft p-6 mb-6">
+          <div className="flex items-start justify-between">
+            <div>
+              <h2 className="font-display text-xl font-semibold text-foreground mb-2">
+                {company?.name || "Empresa"}
+              </h2>
+              <p className="text-muted-foreground">
+                CNPJ: {company?.cnpj || "—"}
+              </p>
+            </div>
+            <Button onClick={openEditDialog} className="gap-2">
+              <Settings2 className="w-4 h-4" />
+              Editar Dados Axioma
+            </Button>
+          </div>
+
+          {/* Status Indicators */}
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50">
+              <Brain 
+                className={`w-8 h-8 ${
+                  hasData(company?.market_intelligence)
+                    ? "text-primary"
+                    : "text-muted-foreground/30"
+                }`}
+              />
+              <div>
+                <p className="font-medium text-foreground">Inteligência de Mercado</p>
+                <p className="text-sm text-muted-foreground">
+                  {hasData(company?.market_intelligence) ? "Configurado" : "Não configurado"}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50">
+              <LineChart 
+                className={`w-8 h-8 ${
+                  hasData(company?.statistical_studies)
+                    ? "text-accent"
+                    : "text-muted-foreground/30"
+                }`}
+              />
+              <div>
+                <p className="font-medium text-foreground">Estudos Estatísticos</p>
+                <p className="text-sm text-muted-foreground">
+                  {hasData(company?.statistical_studies) ? "Configurado" : "Não configurado"}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Edit Dialog */}
@@ -317,7 +340,7 @@ const Admin = () => {
             <DialogHeader>
               <DialogTitle>Editar Dados Axioma</DialogTitle>
               <DialogDescription>
-                Edite os dados de Inteligência de Mercado e Estudos Estatísticos para {selectedCompany?.name}
+                Edite os dados de Inteligência de Mercado e Estudos Estatísticos para {company?.name}
               </DialogDescription>
             </DialogHeader>
 
@@ -465,4 +488,4 @@ const Admin = () => {
   );
 };
 
-export default Admin;
+export default Settings;
