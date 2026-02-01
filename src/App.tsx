@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
+import Settings from "./pages/Settings";
 import Risks from "./pages/Risks";
 import Maintenance from "./pages/Maintenance";
 import NPS from "./pages/NPS";
@@ -51,8 +52,8 @@ const App = () => (
           <Route 
             path="/configuracoes" 
             element={
-              <ProtectedRoute allowedRoles={['total_quality_iso']}>
-                <div className="p-8">Configurações</div>
+              <ProtectedRoute allowedRoles={['master', 'proprietario']}>
+                <Settings />
               </ProtectedRoute>
             } 
           />
