@@ -486,7 +486,7 @@ const Maintenance = () => {
                                   Próxima: {new Date(asset.next_maintenance).toLocaleDateString('pt-BR')}
                                   {daysUntil !== null && (
                                     <span className="ml-1">
-                                      ({daysUntil > 0 ? `em ${daysUntil} dias` : `${Math.abs(daysUntil)} dias atrasada`})
+                                      ({daysUntil > 0 ? `em ${daysUntil} dias` : `${Math.abs(daysUntil)} dias atrasados`})
                                     </span>
                                   )}
                                 </span>
