@@ -64,6 +64,14 @@ const Auth = () => {
         
         if (profile) {
           navigate("/dashboard");
+        } else if (session?.user && !profile && !isCreatingProfileRef.current) {
+          // User is logged in but has no profile - sign out to prevent infinite redirect loop
+          console.log("User logged in without profile, signing out to prevent redirect loop");
+          try {
+            await supabase.auth.signOut();
+          } catch (signOutError) {
+            console.error("Error during session cleanup:", signOutError);
+          }
         }
       }
     });
@@ -83,6 +91,14 @@ const Auth = () => {
         
         if (profile) {
           navigate("/dashboard");
+        } else if (session?.user && !profile && !isCreatingProfileRef.current) {
+          // User is logged in but has no profile - sign out to prevent infinite redirect loop
+          console.log("User logged in without profile, signing out to prevent redirect loop");
+          try {
+            await supabase.auth.signOut();
+          } catch (signOutError) {
+            console.error("Error during session cleanup:", signOutError);
+          }
         }
       }
     });
@@ -187,47 +203,59 @@ const Auth = () => {
           // Step 2: Create company record with timeout
           failedStep = "registro da empresa";
           
-          // Add 10 second timeout for company insertion
-          const companyResult = await new Promise<unknown>((resolve, reject) => {
-            const timeoutId = setTimeout(() => {
-              reject(new Error("Timeout ao criar empresa (10s)"));
-            }, 10000);
+          let companyData: { id: string } | null = null;
+          
+          // Specific try/catch for company insertion to capture detailed errors
+          try {
+            // Add 10 second timeout for company insertion
+            const companyResult = await new Promise<unknown>((resolve, reject) => {
+              const timeoutId = setTimeout(() => {
+                reject(new Error("Timeout ao criar empresa (10s)"));
+              }, 10000);
 
-            supabase
-              .from("companies")
-              .insert({
-                user_id: authData.user.id,
-                name: companyName.trim(),
-                cnpj: result.data.cnpj, // Use normalized CNPJ from Zod transform
-                phone: phone.trim() || null,
-              })
-              .select()
-              .single()
-              .then(result => {
-                clearTimeout(timeoutId);
-                // Log the result for debugging database errors
-                console.log("Company insert result:", result);
-                resolve(result);
-              })
-              .catch(error => {
-                clearTimeout(timeoutId);
-                // Log the error for debugging (e.g., missing column or RLS policy violation)
-                console.error("Company insert error:", error);
-                reject(error);
-              });
-          });
+              supabase
+                .from("companies")
+                .insert({
+                  user_id: authData.user.id,
+                  name: companyName.trim(),
+                  cnpj: result.data.cnpj, // Use normalized CNPJ from Zod transform
+                  phone: phone.trim() || null,
+                })
+                .select()
+                .single()
+                .then(result => {
+                  clearTimeout(timeoutId);
+                  // Log the result for debugging database errors
+                  console.log("Company insert result:", result);
+                  resolve(result);
+                })
+                .catch(error => {
+                  clearTimeout(timeoutId);
+                  // Log the error for debugging (e.g., missing column or RLS policy violation)
+                  console.error("Erro Detalhado Banco:", error);
+                  reject(error);
+                });
+            });
 
-          const { data: companyData, error: companyError } = companyResult as {
-            data: { id: string } | null;
-            error: { message: string } | null;
-          };
+            const { data: resultData, error: companyError } = companyResult as {
+              data: { id: string } | null;
+              error: { message: string } | null;
+            };
 
-          if (companyError) {
-            throw new Error(`Erro ao registrar empresa: ${companyError.message}`);
-          }
+            if (companyError) {
+              console.error("Erro Detalhado Banco:", companyError);
+              throw new Error(`Erro ao registrar empresa: ${companyError.message}`);
+            }
 
-          if (!companyData) {
-            throw new Error("Erro ao registrar empresa: dados não retornados");
+            if (!resultData) {
+              throw new Error("Erro ao registrar empresa: dados não retornados");
+            }
+            
+            companyData = resultData;
+          } catch (companyInsertError) {
+            // Log detailed error and re-throw to main catch block
+            console.error("Erro Detalhado Banco:", companyInsertError);
+            throw companyInsertError;
           }
 
           // Step 3: Create profile with company_id link and timeout
@@ -280,38 +308,20 @@ const Auth = () => {
       // Check if error is from the overall timeout
       const errorMessage = error instanceof Error ? error.message : String(error);
       
-      if (errorMessage === "SIGNUP_TIMEOUT") {
-        // Overall timeout - reset loading and show friendly message
-        setLoading(false);
-        isCreatingProfileRef.current = false;
-        toast.error("A conexão falhou. Por favor, verifique a rede ou tente novamente");
-        
-        // If user was created before timeout, sign them out
-        if (userCreated) {
-          try {
-            console.log("Timeout cleanup: signing out user due to incomplete registration");
-            await supabase.auth.signOut();
-          } catch (signOutError) {
-            console.error("Error during timeout cleanup signOut:", signOutError);
-          }
-        }
-        return;
-      }
-      
-      // If user was created but company/profile failed, sign them out immediately
-      // to avoid "dirty" sessions without complete profile
+      // For any error after user creation, perform auto-cleanup to remove partial session
       if (userCreated) {
         try {
-          console.log("Cleaning up: signing out user due to incomplete registration");
+          console.log("Auto-cleanup: signing out user due to incomplete registration");
           await supabase.auth.signOut();
         } catch (signOutError) {
-          console.error("Error during cleanup signOut:", signOutError);
-          // Continue to show the original error to the user
+          console.error("Error during auto-cleanup signOut:", signOutError);
         }
       }
       
-      // Provide user-friendly error messages with clear step indication
-      if (errorMessage.includes("already registered") || errorMessage.includes("User already registered")) {
+      // Provide user-friendly error messages
+      if (errorMessage === "SIGNUP_TIMEOUT") {
+        toast.error("A conexão falhou. Por favor, verifique a rede ou tente novamente");
+      } else if (errorMessage.includes("already registered") || errorMessage.includes("User already registered")) {
         toast.error("Este email já está cadastrado. Faça login ou use outro email.");
       } else if (errorMessage.includes("Timeout")) {
         toast.error(`Operação demorou muito (${failedStep}). Por favor, tente novamente.`);
@@ -321,6 +331,7 @@ const Auth = () => {
         toast.error(errorMessage);
       }
     } finally {
+      // Forced UI reset: Execute before any other logic to ensure button state returns to normal
       setLoading(false);
       isCreatingProfileRef.current = false;
     }
