@@ -182,7 +182,7 @@ const IntelligenceDashboards = ({ companyId }: Props) => {
   const revenueChartData = revenueData.map((item) => ({
     name: `${item.paymentStatus} - ${item.planType}`,
     value: item.count,
-    fill: item.paymentStatus === 'Adimplente' ? COLORS.green[0] : COLORS.red[0]
+    fill: item.paymentStatus === 'adimplente' ? COLORS.green[0] : COLORS.red[0]
   }));
 
   return (
