@@ -320,6 +320,7 @@ const Auth = () => {
                     placeholder="00.000.000/0000-00"
                     value={cnpj}
                     onChange={(e) => setCnpj(e.target.value)}
+                    maxLength={18}
                     className={`pl-10 ${errors.cnpj ? "border-destructive" : ""}`}
                   />
                 </div>
