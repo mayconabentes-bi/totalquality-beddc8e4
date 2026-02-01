@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { CheckCircle, ArrowLeft, Loader2, Building2, User, Mail, Lock, Phone } from "lucide-react";
+import { CheckCircle, ArrowLeft, Loader2, Building2, User, Mail, Lock, Phone, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -18,6 +18,10 @@ const loginSchema = z.object({
 const signupSchema = z.object({
   fullName: z.string().trim().min(2, { message: "Nome deve ter no mínimo 2 caracteres" }).max(100),
   companyName: z.string().trim().min(2, { message: "Nome da empresa deve ter no mínimo 2 caracteres" }).max(100),
+  cnpj: z.string()
+    .trim()
+    .transform((val) => val.replace(/[^\d]/g, '')) // Remove formatting characters
+    .refine((val) => val.length === 14, { message: "CNPJ deve conter 14 dígitos" }),
   phone: z.string().trim().optional(),
   email: z.string().trim().email({ message: "Email inválido" }).max(255),
   password: z.string().min(6, { message: "Senha deve ter no mínimo 6 caracteres" }),
@@ -37,9 +41,10 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [companyName, setCompanyName] = useState("");
+  const [cnpj, setCnpj] = useState("");
   const [phone, setPhone] = useState("");
   // Default role is 'empresa' as most users signing up are companies seeking certifications
-  const [selectedRole, setSelectedRole] = useState<'auditor' | 'empresa' | 'total_quality_iso'>("empresa");
+  const selectedRole = "empresa";
 
   useEffect(() => {
     // Check if user is already logged in
@@ -131,6 +136,7 @@ const Auth = () => {
     const result = signupSchema.safeParse({ 
       fullName, 
       companyName, 
+      cnpj,
       phone, 
       email, 
       password 
@@ -159,11 +165,13 @@ const Auth = () => {
 
       if (authData.user) {
         // Step 2: Create company record immediately and capture the id
+        // Use the normalized CNPJ from validation result (without formatting)
         const { data: companyData, error: companyError } = await supabase
           .from("companies")
           .insert({
             user_id: authData.user.id,
             name: companyName.trim(),
+            cnpj: result.data.cnpj, // Use normalized CNPJ from Zod transform
             phone: phone.trim() || null,
           })
           .select()
@@ -301,6 +309,25 @@ const Auth = () => {
               </div>
 
               <div>
+                <Label htmlFor="cnpj" className="text-sm font-medium">
+                  CNPJ
+                </Label>
+                <div className="relative mt-1.5">
+                  <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="cnpj"
+                    type="text"
+                    placeholder="00.000.000/0000-00"
+                    value={cnpj}
+                    onChange={(e) => setCnpj(e.target.value)}
+                    maxLength={18}
+                    className={`pl-10 ${errors.cnpj ? "border-destructive" : ""}`}
+                  />
+                </div>
+                {errors.cnpj && <p className="text-sm text-destructive mt-1">{errors.cnpj}</p>}
+              </div>
+
+              <div>
                 <Label htmlFor="phone" className="text-sm font-medium">
                   Telefone <span className="text-muted-foreground">(opcional)</span>
                 </Label>
@@ -314,31 +341,6 @@ const Auth = () => {
                     onChange={(e) => setPhone(e.target.value)}
                     className="pl-10"
                   />
-                </div>
-              </div>
-
-              <div>
-                <Label className="text-sm font-medium mb-2 block">Modalidade de Acesso</Label>
-                <div className="grid grid-cols-1 gap-2 mb-4">
-                  {[
-                    { id: 'empresa' as const, label: 'Empresa (Cliente)', desc: 'Gestão operacional e documentos' },
-                    { id: 'auditor' as const, label: 'Auditor ISO', desc: 'Checklists e conformidade' },
-                    { id: 'total_quality_iso' as const, label: 'Total Quality ISO', desc: 'Gestão macro e delegação' }
-                  ].map((role) => (
-                    <button
-                      key={role.id}
-                      type="button"
-                      onClick={() => setSelectedRole(role.id)}
-                      className={`p-3 border rounded-lg text-left transition-all ${
-                        selectedRole === role.id 
-                          ? 'border-primary bg-primary/5 ring-1 ring-primary' 
-                          : 'border-border'
-                      }`}
-                    >
-                      <span className="block font-bold text-sm">{role.label}</span>
-                      <span className="text-xs text-muted-foreground">{role.desc}</span>
-                    </button>
-                  ))}
                 </div>
               </div>
 
