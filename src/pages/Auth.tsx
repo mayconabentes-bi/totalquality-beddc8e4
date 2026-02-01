@@ -39,7 +39,7 @@ const Auth = () => {
   const [companyName, setCompanyName] = useState("");
   const [phone, setPhone] = useState("");
   // Default role is 'empresa' as most users signing up are companies seeking certifications
-  const [selectedRole, setSelectedRole] = useState("empresa");
+  const [selectedRole, setSelectedRole] = useState<'auditor' | 'empresa' | 'total_quality_iso'>("empresa");
 
   useEffect(() => {
     // Check if user is already logged in
@@ -358,9 +358,9 @@ const Auth = () => {
                     </div>
                   </div>
                   <div className="flex items-start space-x-3 rounded-lg border border-border p-4 hover:bg-accent/50 transition-colors">
-                    <RadioGroupItem value="admin" id="admin" className="mt-1" />
+                    <RadioGroupItem value="total_quality_iso" id="total_quality_iso" className="mt-1" />
                     <div className="flex-1">
-                      <Label htmlFor="admin" className="text-sm font-semibold cursor-pointer">
+                      <Label htmlFor="total_quality_iso" className="text-sm font-semibold cursor-pointer">
                         Total Quality ISO
                       </Label>
                       <p className="text-xs text-muted-foreground mt-1">
