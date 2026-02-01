@@ -54,7 +54,7 @@ describe("Dashboard - Role-based Visibility", () => {
       .mockResolvedValueOnce({
         data: {
           id: "profile-123",
-          full_name: "Test Auditor",
+          name: "Test Auditor",
           role: "auditor",
           company_id: "company-123",
         },
@@ -123,7 +123,7 @@ describe("Dashboard - Role-based Visibility", () => {
       .mockResolvedValueOnce({
         data: {
           id: "profile-456",
-          full_name: "Test Empresa",
+          name: "Test Empresa",
           role: "empresa",
           company_id: "company-456",
         },
@@ -188,7 +188,7 @@ describe("Dashboard - Role-based Visibility", () => {
       .mockResolvedValueOnce({
         data: {
           id: "profile-789",
-          full_name: "Test Admin",
+          name: "Test Admin",
           role: "total_quality_iso",
           company_id: "company-789",
         },
@@ -254,7 +254,7 @@ describe("Dashboard - Role-based Visibility", () => {
       .mockResolvedValueOnce({
         data: {
           id: "profile-master",
-          full_name: "Master User",
+          name: "Master User",
           role: "master",
           company_id: null,
         },
