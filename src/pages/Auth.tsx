@@ -294,7 +294,7 @@ const Auth = () => {
               .from("profiles")
               .insert({
                 user_id: authData.user.id,
-                full_name: fullName.trim(),
+                name: fullName.trim(),
                 company_id: companyData.id,
                 role: selectedRole,
               })

@@ -83,7 +83,7 @@ const Treinador = () => {
       .from("students")
       .select("id, name")
       .eq("company_id", companyId)
-      .eq("status", "Ativo")
+      .eq("status", "ativo")
       .order("name");
 
     if (!error && data) {

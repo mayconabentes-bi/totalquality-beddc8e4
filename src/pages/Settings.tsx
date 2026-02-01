@@ -48,7 +48,7 @@ interface Company {
 
 interface Profile {
   id: string;
-  full_name: string | null;
+  name: string | null;
   role: string | null;
   company_id: string | null;
 }
@@ -97,7 +97,7 @@ const Settings = () => {
   const [newUserForm, setNewUserForm] = useState({
     email: "",
     password: "",
-    full_name: "",
+    name: "",
     role: ""
   });
 
@@ -153,7 +153,7 @@ const Settings = () => {
               .from("profiles")
               .select("*")
               .eq("company_id", profileData.company_id)
-              .order("full_name");
+              .order("name");
 
             if (teamData) {
               setTeamMembers(teamData);
@@ -176,7 +176,7 @@ const Settings = () => {
         .from("profiles")
         .select("*")
         .eq("company_id", profile.company_id)
-        .order("full_name");
+        .order("name");
 
       if (!error && data) {
         setTeamMembers(data);
@@ -187,7 +187,7 @@ const Settings = () => {
   };
 
   const handleCreateUser = async () => {
-    if (!newUserForm.email || !newUserForm.password || !newUserForm.full_name || !newUserForm.role) {
+    if (!newUserForm.email || !newUserForm.password || !newUserForm.name || !newUserForm.role) {
       toast.error("Todos os campos são obrigatórios");
       return;
     }
@@ -449,7 +449,7 @@ const Settings = () => {
                       <UsersIcon className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <p className="font-medium">{member.full_name || "Sem nome"}</p>
+                      <p className="font-medium">{member.name || "Sem nome"}</p>
                       <p className="text-sm text-muted-foreground">
                         {member.role || "Sem role"} • ID: {member.id.substring(0, 8)}...
                       </p>
@@ -667,8 +667,8 @@ const Settings = () => {
                 <Label htmlFor="user-name">Nome Completo *</Label>
                 <Input
                   id="user-name"
-                  value={newUserForm.full_name}
-                  onChange={(e) => setNewUserForm({ ...newUserForm, full_name: e.target.value })}
+                  value={newUserForm.name}
+                  onChange={(e) => setNewUserForm({ ...newUserForm, name: e.target.value })}
                   placeholder="Nome do usuário"
                 />
               </div>

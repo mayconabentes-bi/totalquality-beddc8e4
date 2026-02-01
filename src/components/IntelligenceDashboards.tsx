@@ -68,7 +68,7 @@ const IntelligenceDashboards = ({ companyId }: Props) => {
       .from("students")
       .select("current_payment_status, current_plan, current_payment_method")
       .eq("company_id", companyId)
-      .eq("status", "Ativo");
+      .eq("status", "ativo");
 
     if (!error && data) {
       // Group data for visualization
@@ -111,9 +111,9 @@ const IntelligenceDashboards = ({ companyId }: Props) => {
         if (!grouped[neighborhood]) {
           grouped[neighborhood] = { active: 0, cancelled: 0 };
         }
-        if (student.status === 'Ativo') {
+        if (student.status === 'ativo') {
           grouped[neighborhood].active++;
-        } else if (student.status === 'Cancelado') {
+        } else if (student.status === 'cancelado') {
           grouped[neighborhood].cancelled++;
         }
       });
@@ -144,11 +144,11 @@ const IntelligenceDashboards = ({ companyId }: Props) => {
       .from("students")
       .select("id")
       .eq("company_id", companyId)
-      .eq("status", "Ativo");
+      .eq("status", "ativo");
 
     if (!visitsError && !studentsError && visitsData && studentsData) {
       const totalVisits = visitsData.length;
-      const scheduledVisits = visitsData.filter(v => v.visit_type === 'Visita com Aula Agendada').length;
+      const scheduledVisits = visitsData.filter(v => v.visit_type === 'visita_com_aula_agendada').length;
       const convertedVisits = visitsData.filter(v => v.converted_to_student).length;
       const activeStudents = studentsData.length;
 

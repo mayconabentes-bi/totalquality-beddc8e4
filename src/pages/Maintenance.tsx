@@ -39,7 +39,7 @@ interface MaintenanceAsset {
   category: string;
   last_maintenance: string | null;
   next_maintenance: string | null;
-  status: 'Ok' | 'Alerta' | 'Crítico';
+  status: 'ok' | 'alerta' | 'critico';
 }
 
 interface Profile {
@@ -58,7 +58,7 @@ const Maintenance = () => {
     category: "",
     last_maintenance: "",
     next_maintenance: "",
-    status: "Ok" as 'Ok' | 'Alerta' | 'Crítico'
+    status: "ok" as 'ok' | 'alerta' | 'critico'
   });
 
   useEffect(() => {
@@ -149,7 +149,7 @@ const Maintenance = () => {
         category: "",
         last_maintenance: "",
         next_maintenance: "",
-        status: "Ok"
+        status: "ok"
       });
       fetchAssets();
     } catch (error) {
@@ -199,7 +199,7 @@ const Maintenance = () => {
         .update({
           last_maintenance: today,
           next_maintenance: nextMaintenance.toISOString().split('T')[0],
-          status: "Ok"
+          status: "ok"
         })
         .eq("id", id);
 
@@ -214,11 +214,11 @@ const Maintenance = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Ok":
+      case "ok":
         return "bg-green-100 border-green-300 text-green-800";
-      case "Alerta":
+      case "alerta":
         return "bg-yellow-100 border-yellow-300 text-yellow-800";
-      case "Crítico":
+      case "critico":
         return "bg-red-100 border-red-300 text-red-800";
       default:
         return "bg-gray-100 border-gray-300 text-gray-800";
@@ -227,11 +227,11 @@ const Maintenance = () => {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "Ok":
+      case "ok":
         return <CheckCircle className="w-5 h-5 text-green-600" />;
-      case "Alerta":
+      case "alerta":
         return <AlertCircle className="w-5 h-5 text-yellow-600" />;
-      case "Crítico":
+      case "critico":
         return <AlertCircle className="w-5 h-5 text-red-600" />;
       default:
         return null;
@@ -292,7 +292,7 @@ const Maintenance = () => {
                     category: "",
                     last_maintenance: "",
                     next_maintenance: "",
-                    status: "Ok"
+                    status: "ok"
                   });
                 }}>
                   <Plus className="w-4 h-4 mr-2" />
@@ -363,9 +363,9 @@ const Maintenance = () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Ok">Ok</SelectItem>
-                        <SelectItem value="Alerta">Alerta</SelectItem>
-                        <SelectItem value="Crítico">Crítico</SelectItem>
+                        <SelectItem value="ok">Ok</SelectItem>
+                        <SelectItem value="alerta">Alerta</SelectItem>
+                        <SelectItem value="critico">Crítico</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

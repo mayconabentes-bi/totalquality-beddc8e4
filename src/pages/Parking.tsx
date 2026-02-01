@@ -17,7 +17,7 @@ interface ParkingLog {
   license_plate: string;
   entry_time: string;
   exit_time: string | null;
-  status: 'Entrada' | 'Saída';
+  status: 'entrada' | 'saida';
 }
 
 interface Student {
@@ -98,7 +98,7 @@ const Parking = () => {
       .from("parking_logs")
       .select("*")
       .eq("company_id", compId)
-      .eq("status", "Entrada")
+      .eq("status", "entrada")
       .order("entry_time", { ascending: false });
 
     if (!error && data) {
@@ -111,7 +111,7 @@ const Parking = () => {
       .from("students")
       .select("id, name")
       .eq("company_id", compId)
-      .eq("status", "Ativo")
+      .eq("status", "ativo")
       .order("name");
 
     if (!error && data) {
@@ -129,7 +129,7 @@ const Parking = () => {
       company_id: companyId,
       student_name: entryForm.student_name,
       license_plate: entryForm.license_plate.toUpperCase(),
-      status: "Entrada"
+      status: "entrada"
     });
 
     if (error) {
@@ -147,7 +147,7 @@ const Parking = () => {
     const { error } = await supabase
       .from("parking_logs")
       .update({ 
-        status: "Saída",
+        status: "saida",
         exit_time: new Date().toISOString()
       })
       .eq("id", logId);

@@ -25,7 +25,7 @@ interface Student {
   address: string | null;
   phone: string | null;
   email: string | null;
-  status: 'Ativo' | 'Inativo' | 'Cancelado';
+  status: 'ativo' | 'inativo' | 'cancelado';
   cancellation_reason: string | null;
   dependents: Record<string, unknown> | unknown[];
   geo_economic_profile: string | null;
@@ -44,7 +44,7 @@ interface Student {
 interface StudentFlow {
   id: string;
   visitor_name: string;
-  visit_type: 'Visita sem Aula' | 'Visita com Aula Agendada';
+  visit_type: 'visita_sem_aula' | 'visita_com_aula_agendada';
   visit_date: string;
   converted_to_student: boolean;
 }
@@ -64,12 +64,12 @@ const Secretaria = () => {
   // Student form state
   const [studentForm, setStudentForm] = useState({
     name: "", cpf: "", address: "", phone: "", email: "",
-    status: "Ativo" as 'Ativo' | 'Inativo' | 'Cancelado',
+    status: "ativo" as 'ativo' | 'inativo' | 'cancelado',
     cancellation_reason: "", geo_economic_profile: "", dependents: "[]",
     // New demographic fields
     neighborhood: "", age: "", gender: "", marital_status: "", profession: "",
     // New financial fields
-    current_plan: "", current_payment_method: "", current_payment_status: "Adimplente",
+    current_plan: "", current_payment_method: "", current_payment_status: "adimplente",
     // Initial Evaluation fields (stored in strategic_data)
     weight: "", body_fat_percentage: "", objective: "", last_evaluation_date: ""
   });
@@ -78,7 +78,7 @@ const Secretaria = () => {
   // Visit form state
   const [visitForm, setVisitForm] = useState({
     visitor_name: "",
-    visit_type: "Visita sem Aula" as 'Visita sem Aula' | 'Visita com Aula Agendada'
+    visit_type: "visita_sem_aula" as 'visita_sem_aula' | 'visita_com_aula_agendada'
   });
   const [visitDialogOpen, setVisitDialogOpen] = useState(false);
 
@@ -186,7 +186,7 @@ const Secretaria = () => {
       return;
     }
 
-    if (studentForm.status === 'Cancelado' && !studentForm.cancellation_reason) {
+    if (studentForm.status === 'cancelado' && !studentForm.cancellation_reason) {
       toast.error("Motivo de cancelamento é obrigatório quando status é Cancelado");
       return;
     }
@@ -217,7 +217,7 @@ const Secretaria = () => {
       phone: studentForm.phone || null,
       email: studentForm.email || null,
       status: studentForm.status,
-      cancellation_reason: studentForm.status === 'Cancelado' ? studentForm.cancellation_reason : null,
+      cancellation_reason: studentForm.status === 'cancelado' ? studentForm.cancellation_reason : null,
       geo_economic_profile: studentForm.geo_economic_profile || null,
       dependents: strategicData,
       // New demographic fields
@@ -239,9 +239,9 @@ const Secretaria = () => {
       toast.success("Aluno cadastrado com sucesso!");
       setStudentForm({
         name: "", cpf: "", address: "", phone: "", email: "",
-        status: "Ativo", cancellation_reason: "", geo_economic_profile: "", dependents: "[]",
+        status: "ativo", cancellation_reason: "", geo_economic_profile: "", dependents: "[]",
         neighborhood: "", age: "", gender: "", marital_status: "", profession: "",
-        current_plan: "", current_payment_method: "", current_payment_status: "Adimplente",
+        current_plan: "", current_payment_method: "", current_payment_status: "adimplente",
         weight: "", body_fat_percentage: "", objective: "", last_evaluation_date: ""
       });
       setStudentDialogOpen(false);
@@ -266,7 +266,7 @@ const Secretaria = () => {
       console.error(error);
     } else {
       toast.success("Visita registrada com sucesso!");
-      setVisitForm({ visitor_name: "", visit_type: "Visita sem Aula" });
+      setVisitForm({ visitor_name: "", visit_type: "visita_sem_aula" });
       setVisitDialogOpen(false);
       fetchVisits(companyId);
     }
@@ -450,10 +450,10 @@ const Secretaria = () => {
                                 <SelectValue placeholder="Selecione..." />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="Masculino">Masculino</SelectItem>
-                                <SelectItem value="Feminino">Feminino</SelectItem>
-                                <SelectItem value="Outro">Outro</SelectItem>
-                                <SelectItem value="Prefiro não informar">Prefiro não informar</SelectItem>
+                                <SelectItem value="masculino">Masculino</SelectItem>
+                                <SelectItem value="feminino">Feminino</SelectItem>
+                                <SelectItem value="outro">Outro</SelectItem>
+                                <SelectItem value="nao_informar">Prefiro não informar</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
@@ -469,12 +469,12 @@ const Secretaria = () => {
                                 <SelectValue placeholder="Selecione..." />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="Solteiro(a)">Solteiro(a)</SelectItem>
-                                <SelectItem value="Casado(a)">Casado(a)</SelectItem>
-                                <SelectItem value="Divorciado(a)">Divorciado(a)</SelectItem>
-                                <SelectItem value="Viúvo(a)">Viúvo(a)</SelectItem>
-                                <SelectItem value="União Estável">União Estável</SelectItem>
-                                <SelectItem value="Outro">Outro</SelectItem>
+                                <SelectItem value="solteiro">Solteiro(a)</SelectItem>
+                                <SelectItem value="casado">Casado(a)</SelectItem>
+                                <SelectItem value="divorciado">Divorciado(a)</SelectItem>
+                                <SelectItem value="viuvo">Viúvo(a)</SelectItem>
+                                <SelectItem value="uniao_estavel">União Estável</SelectItem>
+                                <SelectItem value="outro">Outro</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
@@ -505,11 +505,11 @@ const Secretaria = () => {
                               <SelectValue placeholder="Selecione o plano..." />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="Mensal">Mensal</SelectItem>
-                              <SelectItem value="Bimestral">Bimestral</SelectItem>
-                              <SelectItem value="Trimestral">Trimestral</SelectItem>
-                              <SelectItem value="Semestral">Semestral</SelectItem>
-                              <SelectItem value="Anual">Anual</SelectItem>
+                              <SelectItem value="mensal">Mensal</SelectItem>
+                              <SelectItem value="bimestral">Bimestral</SelectItem>
+                              <SelectItem value="trimestral">Trimestral</SelectItem>
+                              <SelectItem value="semestral">Semestral</SelectItem>
+                              <SelectItem value="anual">Anual</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -523,11 +523,11 @@ const Secretaria = () => {
                               <SelectValue placeholder="Selecione o método..." />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="Pix">Pix</SelectItem>
-                              <SelectItem value="Cartão de Crédito">Cartão de Crédito</SelectItem>
-                              <SelectItem value="Débito">Débito</SelectItem>
-                              <SelectItem value="Boleto">Boleto</SelectItem>
-                              <SelectItem value="Recorrência">Recorrência</SelectItem>
+                              <SelectItem value="pix">Pix</SelectItem>
+                              <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
+                              <SelectItem value="debito">Débito</SelectItem>
+                              <SelectItem value="boleto">Boleto</SelectItem>
+                              <SelectItem value="recorrencia">Recorrência</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -541,8 +541,8 @@ const Secretaria = () => {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="Adimplente">Adimplente</SelectItem>
-                              <SelectItem value="Inadimplente">Inadimplente</SelectItem>
+                              <SelectItem value="adimplente">Adimplente</SelectItem>
+                              <SelectItem value="inadimplente">Inadimplente</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -612,7 +612,7 @@ const Secretaria = () => {
                       <Label htmlFor="status">Status</Label>
                       <Select
                         value={studentForm.status}
-                        onValueChange={(value: 'Ativo' | 'Inativo' | 'Cancelado') =>
+                        onValueChange={(value: 'ativo' | 'inativo' | 'cancelado') =>
                           setStudentForm({ ...studentForm, status: value })
                         }
                       >
@@ -620,13 +620,13 @@ const Secretaria = () => {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Ativo">Ativo</SelectItem>
-                          <SelectItem value="Inativo">Inativo</SelectItem>
-                          <SelectItem value="Cancelado">Cancelado</SelectItem>
+                          <SelectItem value="ativo">Ativo</SelectItem>
+                          <SelectItem value="inativo">Inativo</SelectItem>
+                          <SelectItem value="cancelado">Cancelado</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-                    {studentForm.status === 'Cancelado' && (
+                    {studentForm.status === 'cancelado' && (
                       <div className="grid gap-2">
                         <Label htmlFor="cancellation_reason">Motivo de Cancelamento *</Label>
                         <Textarea
@@ -649,8 +649,8 @@ const Secretaria = () => {
                     <CardTitle className="flex items-center justify-between">
                       <span>{student.name}</span>
                       <span className={`text-sm px-3 py-1 rounded-full ${
-                        student.status === 'Ativo' ? 'bg-green-100 text-green-800' :
-                        student.status === 'Inativo' ? 'bg-yellow-100 text-yellow-800' :
+                        student.status === 'ativo' ? 'bg-green-100 text-green-800' :
+                        student.status === 'inativo' ? 'bg-yellow-100 text-yellow-800' :
                         'bg-red-100 text-red-800'
                       }`}>
                         {student.status}
@@ -676,7 +676,7 @@ const Secretaria = () => {
                         </p>
                       )}
                       {student.geo_economic_profile && <p>Perfil: {student.geo_economic_profile}</p>}
-                      {student.status === 'Cancelado' && student.cancellation_reason && (
+                      {student.status === 'cancelado' && student.cancellation_reason && (
                         <p className="text-red-600">Motivo: {student.cancellation_reason}</p>
                       )}
                     </div>
@@ -772,7 +772,7 @@ const Secretaria = () => {
                       <Label htmlFor="visit-type">Tipo de Visita</Label>
                       <Select
                         value={visitForm.visit_type}
-                        onValueChange={(value: 'Visita sem Aula' | 'Visita com Aula Agendada') =>
+                        onValueChange={(value: 'visita_sem_aula' | 'visita_com_aula_agendada') =>
                           setVisitForm({ ...visitForm, visit_type: value })
                         }
                       >
@@ -780,8 +780,8 @@ const Secretaria = () => {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Visita sem Aula">Visita sem Aula</SelectItem>
-                          <SelectItem value="Visita com Aula Agendada">Visita com Aula Agendada</SelectItem>
+                          <SelectItem value="visita_sem_aula">Visita sem Aula</SelectItem>
+                          <SelectItem value="visita_com_aula_agendada">Visita com Aula Agendada</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
