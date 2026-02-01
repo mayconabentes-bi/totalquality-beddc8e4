@@ -330,15 +330,19 @@ const Auth = () => {
                 <Label className="text-sm font-medium mb-2 block">Modalidade de Acesso</Label>
                 <div className="grid grid-cols-1 gap-2 mb-4">
                   {[
-                    { id: 'empresa', label: 'Empresa (Cliente)', desc: 'Gestão operacional e documentos' },
-                    { id: 'auditor', label: 'Auditor ISO', desc: 'Checklists e conformidade' },
-                    { id: 'total_quality_iso', label: 'Total Quality ISO', desc: 'Gestão macro e delegação' }
+                    { id: 'empresa' as const, label: 'Empresa (Cliente)', desc: 'Gestão operacional e documentos' },
+                    { id: 'auditor' as const, label: 'Auditor ISO', desc: 'Checklists e conformidade' },
+                    { id: 'total_quality_iso' as const, label: 'Total Quality ISO', desc: 'Gestão macro e delegação' }
                   ].map((role) => (
                     <button
                       key={role.id}
                       type="button"
-                      onClick={() => setSelectedRole(role.id as any)}
-                      className={`p-3 border rounded-lg text-left transition-all ${selectedRole === role.id ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border'}`}
+                      onClick={() => setSelectedRole(role.id)}
+                      className={`p-3 border rounded-lg text-left transition-all ${
+                        selectedRole === role.id 
+                          ? 'border-primary bg-primary/5 ring-1 ring-primary' 
+                          : 'border-border'
+                      }`}
                     >
                       <span className="block font-bold text-sm">{role.label}</span>
                       <span className="text-xs text-muted-foreground">{role.desc}</span>
