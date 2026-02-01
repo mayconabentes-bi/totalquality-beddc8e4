@@ -181,22 +181,29 @@ const Settings = () => {
     if (!company) return;
 
     try {
+      // Helper function to parse and validate numeric values
+      const parseNumericValue = (value: string): number | undefined => {
+        if (!value || value.trim() === "") return undefined;
+        const parsed = parseFloat(value);
+        return isNaN(parsed) ? undefined : parsed;
+      };
+
       // Prepare market intelligence object
       const marketIntelligence: MarketIntelligence = {
         cnae_principal: cnaePrincipal,
         setor_atuacao: setorAtuacao,
         geolocalizacao: geolocalizacao,
         densidade_demografica_local: densidadeDemografica,
-        indice_concorrencia: indiceConcorrencia ? parseFloat(indiceConcorrencia) : undefined,
+        indice_concorrencia: parseNumericValue(indiceConcorrencia),
       };
 
       // Prepare statistical studies object - convert strings to numbers
       const statisticalStudies: StatisticalStudies = {
-        churn_rate: churnRate ? parseFloat(churnRate) : undefined,
-        margin_per_student: marginPerStudent ? parseFloat(marginPerStudent) : undefined,
-        clv: clv ? parseFloat(clv) : undefined,
-        cac: cac ? parseFloat(cac) : undefined,
-        ebitda_projetado: ebitdaProjetado ? parseFloat(ebitdaProjetado) : undefined,
+        churn_rate: parseNumericValue(churnRate),
+        margin_per_student: parseNumericValue(marginPerStudent),
+        clv: parseNumericValue(clv),
+        cac: parseNumericValue(cac),
+        ebitda_projetado: parseNumericValue(ebitdaProjetado),
       };
 
       // Update company in database
