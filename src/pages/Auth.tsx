@@ -65,13 +65,25 @@ const Auth = () => {
         if (profile) {
           navigate("/dashboard");
         } else if (session?.user && !profile && !isCreatingProfileRef.current) {
-          // User is logged in but has no profile - sign out to prevent infinite redirect loop
-          console.log("User logged in without profile, signing out to prevent redirect loop");
-          try {
-            await supabase.auth.signOut();
-          } catch (signOutError) {
-            console.error("Error during session cleanup:", signOutError);
-          }
+          // User is logged in but has no profile - wait 5 seconds then sign out to prevent infinite redirect loop
+          console.log("User logged in without profile, waiting 5 seconds before automatic sign out");
+          setTimeout(async () => {
+            // Check again if profile exists after 5 seconds
+            const { data: profileCheck } = await supabase
+              .from("profiles")
+              .select("id")
+              .eq("user_id", session.user.id)
+              .single();
+            
+            if (!profileCheck && !isCreatingProfileRef.current) {
+              console.log("No profile found after 5 seconds, executing automatic sign out");
+              try {
+                await supabase.auth.signOut();
+              } catch (signOutError) {
+                console.error("Error during session cleanup:", signOutError);
+              }
+            }
+          }, 5000);
         }
       }
     });
@@ -92,13 +104,25 @@ const Auth = () => {
         if (profile) {
           navigate("/dashboard");
         } else if (session?.user && !profile && !isCreatingProfileRef.current) {
-          // User is logged in but has no profile - sign out to prevent infinite redirect loop
-          console.log("User logged in without profile, signing out to prevent redirect loop");
-          try {
-            await supabase.auth.signOut();
-          } catch (signOutError) {
-            console.error("Error during session cleanup:", signOutError);
-          }
+          // User is logged in but has no profile - wait 5 seconds then sign out to prevent infinite redirect loop
+          console.log("User logged in without profile (on mount), waiting 5 seconds before automatic sign out");
+          setTimeout(async () => {
+            // Check again if profile exists after 5 seconds
+            const { data: profileCheck } = await supabase
+              .from("profiles")
+              .select("id")
+              .eq("user_id", session.user.id)
+              .single();
+            
+            if (!profileCheck && !isCreatingProfileRef.current) {
+              console.log("No profile found after 5 seconds (on mount), executing automatic sign out");
+              try {
+                await supabase.auth.signOut();
+              } catch (signOutError) {
+                console.error("Error during session cleanup:", signOutError);
+              }
+            }
+          }, 5000);
         }
       }
     });
@@ -148,6 +172,8 @@ const Auth = () => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     clearErrors();
+
+    console.log('Iniciando cadastro...');
 
     const result = signupSchema.safeParse({ 
       fullName, 
@@ -303,20 +329,14 @@ const Auth = () => {
         timeoutPromise,
       ]);
     } catch (error) {
+      // Mandatory ejection on failure - first action must be signOut
+      await supabase.auth.signOut();
+      
       console.error("Registration error:", error);
+      console.error('ERRO REAL DO BANCO:', error);
       
       // Check if error is from the overall timeout
       const errorMessage = error instanceof Error ? error.message : String(error);
-      
-      // For any error after user creation, perform auto-cleanup to remove partial session
-      if (userCreated) {
-        try {
-          console.log("Auto-cleanup: signing out user due to incomplete registration");
-          await supabase.auth.signOut();
-        } catch (signOutError) {
-          console.error("Error during auto-cleanup signOut:", signOutError);
-        }
-      }
       
       // Provide user-friendly error messages
       if (errorMessage === "SIGNUP_TIMEOUT") {
