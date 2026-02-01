@@ -29,6 +29,16 @@ interface Student {
   cancellation_reason: string | null;
   dependents: Record<string, unknown> | unknown[];
   geo_economic_profile: string | null;
+  // New demographic fields
+  neighborhood: string | null;
+  age: number | null;
+  gender: string | null;
+  marital_status: string | null;
+  profession: string | null;
+  // New financial fields
+  current_plan: string | null;
+  current_payment_method: string | null;
+  current_payment_status: string | null;
 }
 
 interface StudentFlow {
@@ -55,7 +65,11 @@ const Secretaria = () => {
   const [studentForm, setStudentForm] = useState({
     name: "", cpf: "", address: "", phone: "", email: "",
     status: "Ativo" as 'Ativo' | 'Inativo' | 'Cancelado',
-    cancellation_reason: "", geo_economic_profile: "", dependents: "[]"
+    cancellation_reason: "", geo_economic_profile: "", dependents: "[]",
+    // New demographic fields
+    neighborhood: "", age: "", gender: "", marital_status: "", profession: "",
+    // New financial fields
+    current_plan: "", current_payment_method: "", current_payment_status: "Adimplente"
   });
   const [studentDialogOpen, setStudentDialogOpen] = useState(false);
 
@@ -188,7 +202,17 @@ const Secretaria = () => {
       status: studentForm.status,
       cancellation_reason: studentForm.status === 'Cancelado' ? studentForm.cancellation_reason : null,
       geo_economic_profile: studentForm.geo_economic_profile || null,
-      dependents: dependentsJson
+      dependents: dependentsJson,
+      // New demographic fields
+      neighborhood: studentForm.neighborhood || null,
+      age: studentForm.age ? parseInt(studentForm.age) : null,
+      gender: studentForm.gender || null,
+      marital_status: studentForm.marital_status || null,
+      profession: studentForm.profession || null,
+      // New financial fields
+      current_plan: studentForm.current_plan || null,
+      current_payment_method: studentForm.current_payment_method || null,
+      current_payment_status: studentForm.current_payment_status || null
     });
 
     if (error) {
@@ -198,7 +222,9 @@ const Secretaria = () => {
       toast.success("Aluno cadastrado com sucesso!");
       setStudentForm({
         name: "", cpf: "", address: "", phone: "", email: "",
-        status: "Ativo", cancellation_reason: "", geo_economic_profile: "", dependents: "[]"
+        status: "Ativo", cancellation_reason: "", geo_economic_profile: "", dependents: "[]",
+        neighborhood: "", age: "", gender: "", marital_status: "", profession: "",
+        current_plan: "", current_payment_method: "", current_payment_status: "Adimplente"
       });
       setStudentDialogOpen(false);
       fetchStudents(companyId);
@@ -224,6 +250,21 @@ const Secretaria = () => {
       toast.success("Visita registrada com sucesso!");
       setVisitForm({ visitor_name: "", visit_type: "Visita sem Aula" });
       setVisitDialogOpen(false);
+      fetchVisits(companyId);
+    }
+  };
+
+  const handleConvertToStudent = async (visitId: string) => {
+    const { error } = await supabase
+      .from("student_flow")
+      .update({ converted_to_student: true })
+      .eq("id", visitId);
+
+    if (error) {
+      toast.error("Erro ao marcar como convertido");
+      console.error(error);
+    } else {
+      toast.success("Visita marcada como Matrícula Efetivada!");
       fetchVisits(companyId);
     }
   };
@@ -352,8 +393,144 @@ const Secretaria = () => {
                         value={studentForm.dependents}
                         onChange={(e) => setStudentForm({ ...studentForm, dependents: e.target.value })}
                         placeholder='[{"name": "João", "age": 10}]'
+                        rows={2}
                       />
                     </div>
+                    
+                    {/* Demographic Profile Section */}
+                    <div className="border-t pt-4 mt-2">
+                      <h3 className="text-lg font-semibold mb-4">Perfil Demográfico</h3>
+                      <div className="grid gap-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="neighborhood">Bairro *</Label>
+                          <Input
+                            id="neighborhood"
+                            value={studentForm.neighborhood}
+                            onChange={(e) => setStudentForm({ ...studentForm, neighborhood: e.target.value })}
+                            placeholder="Ex: Centro, Jardim das Flores"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="grid gap-2">
+                            <Label htmlFor="age">Idade</Label>
+                            <Input
+                              id="age"
+                              type="number"
+                              min="0"
+                              max="150"
+                              value={studentForm.age}
+                              onChange={(e) => setStudentForm({ ...studentForm, age: e.target.value })}
+                            />
+                          </div>
+                          <div className="grid gap-2">
+                            <Label htmlFor="gender">Gênero</Label>
+                            <Select
+                              value={studentForm.gender}
+                              onValueChange={(value) => setStudentForm({ ...studentForm, gender: value })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Masculino">Masculino</SelectItem>
+                                <SelectItem value="Feminino">Feminino</SelectItem>
+                                <SelectItem value="Outro">Outro</SelectItem>
+                                <SelectItem value="Prefiro não informar">Prefiro não informar</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="grid gap-2">
+                            <Label htmlFor="marital_status">Estado Civil</Label>
+                            <Select
+                              value={studentForm.marital_status}
+                              onValueChange={(value) => setStudentForm({ ...studentForm, marital_status: value })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Solteiro(a)">Solteiro(a)</SelectItem>
+                                <SelectItem value="Casado(a)">Casado(a)</SelectItem>
+                                <SelectItem value="Divorciado(a)">Divorciado(a)</SelectItem>
+                                <SelectItem value="Viúvo(a)">Viúvo(a)</SelectItem>
+                                <SelectItem value="União Estável">União Estável</SelectItem>
+                                <SelectItem value="Outro">Outro</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="grid gap-2">
+                            <Label htmlFor="profession">Profissão</Label>
+                            <Input
+                              id="profession"
+                              value={studentForm.profession}
+                              onChange={(e) => setStudentForm({ ...studentForm, profession: e.target.value })}
+                              placeholder="Ex: Engenheiro, Professor"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Financial Engineering Section */}
+                    <div className="border-t pt-4 mt-2">
+                      <h3 className="text-lg font-semibold mb-4">Engenharia Financeira</h3>
+                      <div className="grid gap-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="current_plan">Plano Atual</Label>
+                          <Select
+                            value={studentForm.current_plan}
+                            onValueChange={(value) => setStudentForm({ ...studentForm, current_plan: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o plano..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Mensal">Mensal</SelectItem>
+                              <SelectItem value="Bimestral">Bimestral</SelectItem>
+                              <SelectItem value="Trimestral">Trimestral</SelectItem>
+                              <SelectItem value="Semestral">Semestral</SelectItem>
+                              <SelectItem value="Anual">Anual</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="current_payment_method">Método de Pagamento</Label>
+                          <Select
+                            value={studentForm.current_payment_method}
+                            onValueChange={(value) => setStudentForm({ ...studentForm, current_payment_method: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o método..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Pix">Pix</SelectItem>
+                              <SelectItem value="Cartão de Crédito">Cartão de Crédito</SelectItem>
+                              <SelectItem value="Débito">Débito</SelectItem>
+                              <SelectItem value="Boleto">Boleto</SelectItem>
+                              <SelectItem value="Recorrência">Recorrência</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="current_payment_status">Status de Pagamento</Label>
+                          <Select
+                            value={studentForm.current_payment_status}
+                            onValueChange={(value) => setStudentForm({ ...studentForm, current_payment_status: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Adimplente">Adimplente</SelectItem>
+                              <SelectItem value="Inadimplente">Inadimplente</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+                    
                     <div className="grid gap-2">
                       <Label htmlFor="status">Status</Label>
                       <Select
@@ -410,7 +587,17 @@ const Secretaria = () => {
                   <CardContent>
                     <div className="text-sm text-muted-foreground space-y-1">
                       {student.cpf && <p>CPF: {student.cpf}</p>}
+                      {student.neighborhood && <p>Bairro: {student.neighborhood}</p>}
                       {student.address && <p>Endereço: {student.address}</p>}
+                      {student.age && <p>Idade: {student.age} anos</p>}
+                      {student.profession && <p>Profissão: {student.profession}</p>}
+                      {student.current_plan && <p>Plano: {student.current_plan}</p>}
+                      {student.current_payment_method && <p>Pagamento: {student.current_payment_method}</p>}
+                      {student.current_payment_status && (
+                        <p className={student.current_payment_status === 'Adimplente' ? 'text-green-600' : 'text-red-600'}>
+                          Status Financeiro: {student.current_payment_status}
+                        </p>
+                      )}
                       {student.geo_economic_profile && <p>Perfil: {student.geo_economic_profile}</p>}
                       {student.status === 'Cancelado' && student.cancellation_reason && (
                         <p className="text-red-600">Motivo: {student.cancellation_reason}</p>
@@ -545,11 +732,22 @@ const Secretaria = () => {
                           </p>
                         </div>
                       </div>
-                      <span className={`text-sm px-3 py-1 rounded-full ${
-                        visit.converted_to_student ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {visit.converted_to_student ? 'Convertido' : 'Pendente'}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-sm px-3 py-1 rounded-full ${
+                          visit.converted_to_student ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {visit.converted_to_student ? 'Convertido' : 'Pendente'}
+                        </span>
+                        {!visit.converted_to_student && (
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleConvertToStudent(visit.id)}
+                          >
+                            Matrícula Efetivada
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
