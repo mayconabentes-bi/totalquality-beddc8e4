@@ -42,10 +42,6 @@ const Parking = () => {
     license_plate: "",
   });
 
-  // Exit form state
-  const [exitDialogOpen, setExitDialogOpen] = useState(false);
-  const [exitSearchTerm, setExitSearchTerm] = useState("");
-
   useEffect(() => {
     fetchData();
     
@@ -283,9 +279,9 @@ const Parking = () => {
             </DialogContent>
           </Dialog>
 
-          <Button size="lg" variant="secondary" className="h-24 text-xl" onClick={() => setExitDialogOpen(true)}>
+          <Button size="lg" variant="secondary" className="h-24 text-xl">
             <ArrowDownCircle className="w-8 h-8 mr-3" />
-            Registrar Saída
+            Registrar Saída (Ver Tabela)
           </Button>
         </div>
 
