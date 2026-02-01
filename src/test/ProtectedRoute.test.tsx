@@ -94,7 +94,7 @@ describe("ProtectedRoute", () => {
     });
   });
 
-  it("should check role and render children when user has allowed role", async () => {
+  it("should check role and render children when user has allowed role and is homologated", async () => {
     vi.mocked(supabase.auth.getSession).mockResolvedValue({
       data: {
         session: createMockSession("user-123"),
@@ -105,7 +105,7 @@ describe("ProtectedRoute", () => {
     const mockSelect = vi.fn().mockReturnThis();
     const mockEq = vi.fn().mockReturnThis();
     const mockSingle = vi.fn().mockResolvedValue({
-      data: { role: "auditor" },
+      data: { role: "auditor", status_homologacao: true },
       error: null,
     });
 
@@ -144,7 +144,7 @@ describe("ProtectedRoute", () => {
     const mockSelect = vi.fn().mockReturnThis();
     const mockEq = vi.fn().mockReturnThis();
     const mockSingle = vi.fn().mockResolvedValue({
-      data: { role: "empresa" },
+      data: { role: "empresa", status_homologacao: true },
       error: null,
     });
 
@@ -220,7 +220,7 @@ describe("ProtectedRoute", () => {
     const mockSelect = vi.fn().mockReturnThis();
     const mockEq = vi.fn().mockReturnThis();
     const mockSingle = vi.fn().mockResolvedValue({
-      data: { role: "master" },
+      data: { role: "master", status_homologacao: false },
       error: null,
     });
 
@@ -245,7 +245,84 @@ describe("ProtectedRoute", () => {
       expect(screen.getByText("Protected Content")).toBeInTheDocument();
     });
 
-    // Master role should not trigger error toast
+    // Master role should not trigger error toast, even if not homologated
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it("should block access when user is not homologated", async () => {
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({
+      data: {
+        session: createMockSession("user-123"),
+      },
+      error: null,
+    });
+
+    const mockSelect = vi.fn().mockReturnThis();
+    const mockEq = vi.fn().mockReturnThis();
+    const mockSingle = vi.fn().mockResolvedValue({
+      data: { role: "auditor", status_homologacao: false },
+      error: null,
+    });
+
+    vi.mocked(supabase.from).mockReturnValue({
+      select: mockSelect,
+      eq: mockEq,
+      single: mockSingle,
+    } as never);
+
+    mockSelect.mockReturnValue({ eq: mockEq });
+    mockEq.mockReturnValue({ single: mockSingle });
+
+    render(
+      <BrowserRouter>
+        <ProtectedRoute allowedRoles={["auditor"]}>
+          <TestChild />
+        </ProtectedRoute>
+      </BrowserRouter>
+    );
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Acesso negado. Aguardando homologação do usuário.");
+      expect(screen.queryByText("Protected Content")).not.toBeInTheDocument();
+    });
+  });
+
+  it("should allow access when user is homologated with correct role", async () => {
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({
+      data: {
+        session: createMockSession("user-123"),
+      },
+      error: null,
+    });
+
+    const mockSelect = vi.fn().mockReturnThis();
+    const mockEq = vi.fn().mockReturnThis();
+    const mockSingle = vi.fn().mockResolvedValue({
+      data: { role: "proprietario", status_homologacao: true },
+      error: null,
+    });
+
+    vi.mocked(supabase.from).mockReturnValue({
+      select: mockSelect,
+      eq: mockEq,
+      single: mockSingle,
+    } as never);
+
+    mockSelect.mockReturnValue({ eq: mockEq });
+    mockEq.mockReturnValue({ single: mockSingle });
+
+    render(
+      <BrowserRouter>
+        <ProtectedRoute allowedRoles={["proprietario", "secretaria"]}>
+          <TestChild />
+        </ProtectedRoute>
+      </BrowserRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Protected Content")).toBeInTheDocument();
+    });
+
     expect(toast.error).not.toHaveBeenCalled();
   });
 });
