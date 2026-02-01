@@ -612,4 +612,7 @@ const Auth = () => {
   );
 };
 
+// Export schemas for testing
+export { signupSchema, loginSchema };
+
 export default Auth;

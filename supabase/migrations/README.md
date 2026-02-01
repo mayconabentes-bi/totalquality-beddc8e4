@@ -17,9 +17,14 @@ Migrations are applied in chronological order based on their timestamp prefix (f
 
 **Solution**:
 - Drops old INSERT policies that were causing conflicts
-- Creates `cadastro_inicial_empresas` policy: Allows authenticated users to insert their own company records
-- Creates `visualizacao_propria_empresa` policy: Allows users to view their own company records without requiring a profile to exist first
-- Creates `cadastro_inicial_perfis` policy: Allows authenticated users to insert their own profile records
+- Creates `cadastro_inicial_empresas` policy: Allows authenticated users to insert their own company records using `auth.uid() = user_id`
+- Creates `visualizacao_propria_empresa` policy: Allows users to view their own company records without requiring a profile to exist first, using `auth.uid() = user_id`
+- Creates `cadastro_inicial_perfis` policy: Allows authenticated users to insert their own profile records using `auth.uid() = user_id`
+
+**Key Implementation Details**:
+- All initial registration policies for `companies` and `profiles` tables have been migrated to use the `auth.uid() = user_id` model
+- This ensures that users can only create and view records associated with their own authenticated user ID
+- The CNPJ column structure has been confirmed in the `companies` table to store 14-digit numeric values
 
 **Notes**:
 - These policies work alongside the role-based policies created in migration `20260201085414`
