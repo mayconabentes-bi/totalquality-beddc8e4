@@ -177,6 +177,7 @@ const Auth = () => {
       failedStep = "registro da empresa";
       
       // Add 10 second timeout for company insertion
+      let companyTimeoutId: ReturnType<typeof setTimeout>;
       const companyResult = await Promise.race([
         supabase
           .from("companies")
@@ -187,10 +188,14 @@ const Auth = () => {
             phone: phone.trim() || null,
           })
           .select()
-          .single(),
-        new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error("Timeout ao criar empresa (10s)")), 10000)
-        )
+          .single()
+          .then(result => {
+            clearTimeout(companyTimeoutId);
+            return result;
+          }),
+        new Promise<never>((_, reject) => {
+          companyTimeoutId = setTimeout(() => reject(new Error("Timeout ao criar empresa (10s)")), 10000);
+        })
       ]);
 
       const { data: companyData, error: companyError } = companyResult;
@@ -207,6 +212,7 @@ const Auth = () => {
       failedStep = "criação do perfil";
       
       // Add 10 second timeout for profile creation
+      let profileTimeoutId: ReturnType<typeof setTimeout>;
       const profileResult = await Promise.race([
         supabase
           .from("profiles")
@@ -215,10 +221,14 @@ const Auth = () => {
             full_name: fullName.trim(),
             company_id: companyData.id,
             role: selectedRole,
+          })
+          .then(result => {
+            clearTimeout(profileTimeoutId);
+            return result;
           }),
-        new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error("Timeout ao criar perfil (10s)")), 10000)
-        )
+        new Promise<never>((_, reject) => {
+          profileTimeoutId = setTimeout(() => reject(new Error("Timeout ao criar perfil (10s)")), 10000);
+        })
       ]);
 
       const { error: profileError } = profileResult;
@@ -236,8 +246,13 @@ const Auth = () => {
       // If user was created but company/profile failed, sign them out immediately
       // to avoid "dirty" sessions without complete profile
       if (userCreated) {
-        console.log("Cleaning up: signing out user due to incomplete registration");
-        await supabase.auth.signOut();
+        try {
+          console.log("Cleaning up: signing out user due to incomplete registration");
+          await supabase.auth.signOut();
+        } catch (signOutError) {
+          console.error("Error during cleanup signOut:", signOutError);
+          // Continue to show the original error to the user
+        }
       }
       
       // Provide user-friendly error messages with clear step indication
