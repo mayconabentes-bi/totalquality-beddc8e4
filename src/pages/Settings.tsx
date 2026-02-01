@@ -48,7 +48,7 @@ interface Company {
 
 interface Profile {
   id: string;
-  name: string | null;
+  full_name: string | null;
   role: string | null;
   company_id: string | null;
 }
@@ -59,6 +59,7 @@ interface MarketIntelligence {
   geolocalizacao?: string;
   densidade_demografica_local?: string;
   indice_concorrencia?: number;
+  [key: string]: string | number | undefined;
 }
 
 interface StatisticalStudies {
@@ -67,6 +68,7 @@ interface StatisticalStudies {
   clv?: number;
   cac?: number;
   ebitda_projetado?: number;
+  [key: string]: number | undefined;
 }
 
 const Settings = () => {
@@ -449,7 +451,7 @@ const Settings = () => {
                       <UsersIcon className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <p className="font-medium">{member.name || "Sem nome"}</p>
+                      <p className="font-medium">{member.full_name || "Sem nome"}</p>
                       <p className="text-sm text-muted-foreground">
                         {member.role || "Sem role"} • ID: {member.id.substring(0, 8)}...
                       </p>

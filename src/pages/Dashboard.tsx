@@ -41,7 +41,7 @@ interface Company {
 
 interface Profile {
   id: string;
-  name: string | null;
+  full_name: string | null;
   role: string | null;
   company_id: string | null;
 }
@@ -166,7 +166,7 @@ const Dashboard = () => {
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground mb-2">
-            Olá, {profile?.name || "Usuário"}! 👋
+            Olá, {profile?.full_name || "Usuário"}! 👋
           </h1>
           <p className="text-muted-foreground">
             Bem-vindo ao painel de gestão da qualidade da{" "}

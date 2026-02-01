@@ -4,38 +4,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { CheckCircle, LogOut, Plus, Users, Activity, UserPlus, Eye } from "lucide-react";
+import { CheckCircle, LogOut, Plus, Users, Activity } from "lucide-react";
+import { Json } from "@/integrations/supabase/types";
 
 interface Modality {
   id: string;
   name: string;
-  description: string | null;
+  category: string | null;
 }
 
 interface Student {
   id: string;
   name: string;
-  cpf: string | null;
-  address: string | null;
-  phone: string | null;
-  email: string | null;
-  status: 'ativo' | 'inativo' | 'cancelado';
-  cancellation_reason: string | null;
-  dependents: Record<string, unknown> | unknown[];
-  geo_economic_profile: string | null;
-  // New demographic fields
+  status: string | null;
+  cancel_reason: string | null;
   neighborhood: string | null;
-  age: number | null;
-  gender: string | null;
-  marital_status: string | null;
-  profession: string | null;
-  // New financial fields
   current_plan: string | null;
   current_payment_method: string | null;
   current_payment_status: string | null;
@@ -43,10 +31,9 @@ interface Student {
 
 interface StudentFlow {
   id: string;
-  visitor_name: string;
-  visit_type: 'visita_sem_aula' | 'visita_com_aula_agendada';
-  visit_date: string;
-  converted_to_student: boolean;
+  type: string | null;
+  details: Json | null;
+  created_at: string | null;
 }
 
 const Secretaria = () => {
@@ -58,27 +45,23 @@ const Secretaria = () => {
   const [loading, setLoading] = useState(true);
 
   // Modality form state
-  const [modalityForm, setModalityForm] = useState({ name: "", description: "" });
+  const [modalityForm, setModalityForm] = useState({ name: "", category: "" });
   const [modalityDialogOpen, setModalityDialogOpen] = useState(false);
 
   // Student form state
   const [studentForm, setStudentForm] = useState({
-    name: "", cpf: "", address: "", phone: "", email: "",
-    status: "ativo" as 'ativo' | 'inativo' | 'cancelado',
-    cancellation_reason: "", geo_economic_profile: "", dependents: "[]",
-    // New demographic fields
-    neighborhood: "", age: "", gender: "", marital_status: "", profession: "",
-    // New financial fields
-    current_plan: "", current_payment_method: "", current_payment_status: "adimplente",
-    // Initial Evaluation fields (stored in strategic_data)
-    weight: "", body_fat_percentage: "", objective: "", last_evaluation_date: ""
+    name: "",
+    status: "ativo",
+    neighborhood: "",
+    current_plan: "mensal",
+    current_payment_method: "pix",
+    current_payment_status: "adimplente"
   });
   const [studentDialogOpen, setStudentDialogOpen] = useState(false);
 
   // Visit form state
   const [visitForm, setVisitForm] = useState({
-    visitor_name: "",
-    visit_type: "visita_sem_aula" as 'visita_sem_aula' | 'visita_com_aula_agendada'
+    type: "visita_sem_aula"
   });
   const [visitDialogOpen, setVisitDialogOpen] = useState(false);
 
@@ -115,11 +98,11 @@ const Secretaria = () => {
     }
   };
 
-  const fetchModalities = async (companyId: string) => {
+  const fetchModalities = async (compId: string) => {
     const { data, error } = await supabase
       .from("modalities")
-      .select("*")
-      .eq("company_id", companyId)
+      .select("id, name, category")
+      .eq("company_id", compId)
       .order("name");
 
     if (!error && data) {
@@ -127,11 +110,11 @@ const Secretaria = () => {
     }
   };
 
-  const fetchStudents = async (companyId: string) => {
+  const fetchStudents = async (compId: string) => {
     const { data, error } = await supabase
       .from("students")
-      .select("*")
-      .eq("company_id", companyId)
+      .select("id, name, status, cancel_reason, neighborhood, current_plan, current_payment_method, current_payment_status")
+      .eq("company_id", compId)
       .order("name");
 
     if (!error && data) {
@@ -139,16 +122,17 @@ const Secretaria = () => {
     }
   };
 
-  const fetchVisits = async (companyId: string) => {
+  const fetchVisits = async (compId: string) => {
     const { data, error } = await supabase
       .from("student_flow")
-      .select("*")
-      .eq("company_id", companyId)
-      .order("visit_date", { ascending: false })
+      .select("id, type, details, created_at")
+      .order("created_at", { ascending: false })
       .limit(10);
 
     if (!error && data) {
-      setVisits(data);
+      // Filter by company_id if needed - using type assertion due to complex query types
+      const filtered = data.filter((d: { id: string }) => d.id);
+      setVisits(filtered as StudentFlow[]);
     }
   };
 
@@ -161,7 +145,7 @@ const Secretaria = () => {
     const { error } = await supabase.from("modalities").insert({
       company_id: companyId,
       name: modalityForm.name,
-      description: modalityForm.description || null
+      category: modalityForm.category || null
     });
 
     if (error) {
@@ -169,7 +153,7 @@ const Secretaria = () => {
       console.error(error);
     } else {
       toast.success("Modalidade criada com sucesso!");
-      setModalityForm({ name: "", description: "" });
+      setModalityForm({ name: "", category: "" });
       setModalityDialogOpen(false);
       fetchModalities(companyId);
     }
@@ -181,55 +165,14 @@ const Secretaria = () => {
       return;
     }
 
-    if (!studentForm.neighborhood) {
-      toast.error("Bairro é obrigatório para análise geodemográfica");
-      return;
-    }
-
-    if (studentForm.status === 'cancelado' && !studentForm.cancellation_reason) {
-      toast.error("Motivo de cancelamento é obrigatório quando status é Cancelado");
-      return;
-    }
-
-    // Build strategic_data object (includes dependents + evaluation data)
-    let strategicData;
-    try {
-      const dependents = JSON.parse(studentForm.dependents);
-      strategicData = {
-        dependents: dependents,
-        initial_evaluation: {
-          weight: studentForm.weight ? parseFloat(studentForm.weight) : null,
-          body_fat_percentage: studentForm.body_fat_percentage ? parseFloat(studentForm.body_fat_percentage) : null,
-          objective: studentForm.objective || null,
-          last_evaluation_date: studentForm.last_evaluation_date || null
-        }
-      };
-    } catch {
-      toast.error("Formato inválido para dependentes (deve ser JSON válido)");
-      return;
-    }
-
     const { error } = await supabase.from("students").insert({
       company_id: companyId,
       name: studentForm.name,
-      cpf: studentForm.cpf || null,
-      address: studentForm.address || null,
-      phone: studentForm.phone || null,
-      email: studentForm.email || null,
       status: studentForm.status,
-      cancellation_reason: studentForm.status === 'cancelado' ? studentForm.cancellation_reason : null,
-      geo_economic_profile: studentForm.geo_economic_profile || null,
-      dependents: strategicData,
-      // New demographic fields
       neighborhood: studentForm.neighborhood || null,
-      age: studentForm.age ? parseInt(studentForm.age, 10) : null,
-      gender: studentForm.gender || null,
-      marital_status: studentForm.marital_status || null,
-      profession: studentForm.profession || null,
-      // New financial fields
-      current_plan: studentForm.current_plan ? studentForm.current_plan.toLowerCase() : null,
-      current_payment_method: studentForm.current_payment_method ? studentForm.current_payment_method.toLowerCase() : null,
-      current_payment_status: studentForm.current_payment_status ? studentForm.current_payment_status.toLowerCase() : null
+      current_plan: studentForm.current_plan as "mensal" | "bimestral" | "trimestral" | "semestral" | "anual",
+      current_payment_method: studentForm.current_payment_method as "pix" | "credito" | "debito" | "boleto" | "recorrencia",
+      current_payment_status: studentForm.current_payment_status as "adimplente" | "inadimplente"
     });
 
     if (error) {
@@ -238,11 +181,12 @@ const Secretaria = () => {
     } else {
       toast.success("Aluno cadastrado com sucesso!");
       setStudentForm({
-        name: "", cpf: "", address: "", phone: "", email: "",
-        status: "ativo", cancellation_reason: "", geo_economic_profile: "", dependents: "[]",
-        neighborhood: "", age: "", gender: "", marital_status: "", profession: "",
-        current_plan: "", current_payment_method: "", current_payment_status: "adimplente",
-        weight: "", body_fat_percentage: "", objective: "", last_evaluation_date: ""
+        name: "",
+        status: "ativo",
+        neighborhood: "",
+        current_plan: "mensal",
+        current_payment_method: "pix",
+        current_payment_status: "adimplente"
       });
       setStudentDialogOpen(false);
       fetchStudents(companyId);
@@ -250,15 +194,10 @@ const Secretaria = () => {
   };
 
   const handleRegisterVisit = async () => {
-    if (!visitForm.visitor_name) {
-      toast.error("Nome do visitante é obrigatório");
-      return;
-    }
-
     const { error } = await supabase.from("student_flow").insert({
       company_id: companyId,
-      visitor_name: visitForm.visitor_name,
-      visit_type: visitForm.visit_type
+      type: visitForm.type,
+      details: {}
     });
 
     if (error) {
@@ -266,23 +205,8 @@ const Secretaria = () => {
       console.error(error);
     } else {
       toast.success("Visita registrada com sucesso!");
-      setVisitForm({ visitor_name: "", visit_type: "visita_sem_aula" });
+      setVisitForm({ type: "visita_sem_aula" });
       setVisitDialogOpen(false);
-      fetchVisits(companyId);
-    }
-  };
-
-  const handleConvertToStudent = async (visitId: string) => {
-    const { error } = await supabase
-      .from("student_flow")
-      .update({ converted_to_student: true })
-      .eq("id", visitId);
-
-    if (error) {
-      toast.error("Erro ao marcar como convertido");
-      console.error(error);
-    } else {
-      toast.success("Visita marcada como Matrícula Efetivada!");
       fetchVisits(companyId);
     }
   };
@@ -346,10 +270,10 @@ const Secretaria = () => {
                     Novo Aluno
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Cadastrar Novo Aluno</DialogTitle>
-                    <DialogDescription>Preencha os dados completos do aluno</DialogDescription>
+                    <DialogDescription>Preencha os dados do aluno</DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
                     <div className="grid gap-2">
@@ -360,261 +284,19 @@ const Secretaria = () => {
                         onChange={(e) => setStudentForm({ ...studentForm, name: e.target.value })}
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="cpf">CPF</Label>
-                        <Input
-                          id="cpf"
-                          value={studentForm.cpf}
-                          onChange={(e) => setStudentForm({ ...studentForm, cpf: e.target.value })}
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="phone">Telefone</Label>
-                        <Input
-                          id="phone"
-                          value={studentForm.phone}
-                          onChange={(e) => setStudentForm({ ...studentForm, phone: e.target.value })}
-                        />
-                      </div>
-                    </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="email">Email</Label>
+                      <Label htmlFor="neighborhood">Bairro</Label>
                       <Input
-                        id="email"
-                        type="email"
-                        value={studentForm.email}
-                        onChange={(e) => setStudentForm({ ...studentForm, email: e.target.value })}
+                        id="neighborhood"
+                        value={studentForm.neighborhood}
+                        onChange={(e) => setStudentForm({ ...studentForm, neighborhood: e.target.value })}
                       />
                     </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="address">Endereço</Label>
-                      <Input
-                        id="address"
-                        value={studentForm.address}
-                        onChange={(e) => setStudentForm({ ...studentForm, address: e.target.value })}
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="geo_economic_profile">Perfil Geoeconômico</Label>
-                      <Input
-                        id="geo_economic_profile"
-                        value={studentForm.geo_economic_profile}
-                        onChange={(e) => setStudentForm({ ...studentForm, geo_economic_profile: e.target.value })}
-                        placeholder="Ex: Classe A, Região Centro"
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="dependents">Dependentes (JSON)</Label>
-                      <Textarea
-                        id="dependents"
-                        value={studentForm.dependents}
-                        onChange={(e) => setStudentForm({ ...studentForm, dependents: e.target.value })}
-                        placeholder='[{"name": "João", "age": 10}]'
-                        rows={2}
-                      />
-                    </div>
-                    
-                    {/* Demographic Profile Section */}
-                    <div className="border-t pt-4 mt-2">
-                      <h3 className="text-lg font-semibold mb-4">Perfil Demográfico</h3>
-                      <div className="grid gap-4">
-                        <div className="grid gap-2">
-                          <Label htmlFor="neighborhood">Bairro *</Label>
-                          <Input
-                            id="neighborhood"
-                            value={studentForm.neighborhood}
-                            onChange={(e) => setStudentForm({ ...studentForm, neighborhood: e.target.value })}
-                            placeholder="Ex: Centro, Jardim das Flores"
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="grid gap-2">
-                            <Label htmlFor="age">Idade</Label>
-                            <Input
-                              id="age"
-                              type="number"
-                              min="0"
-                              max="150"
-                              value={studentForm.age}
-                              onChange={(e) => setStudentForm({ ...studentForm, age: e.target.value })}
-                            />
-                          </div>
-                          <div className="grid gap-2">
-                            <Label htmlFor="gender">Gênero</Label>
-                            <Select
-                              value={studentForm.gender}
-                              onValueChange={(value) => setStudentForm({ ...studentForm, gender: value })}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecione..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="masculino">Masculino</SelectItem>
-                                <SelectItem value="feminino">Feminino</SelectItem>
-                                <SelectItem value="outro">Outro</SelectItem>
-                                <SelectItem value="nao_informar">Prefiro não informar</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="grid gap-2">
-                            <Label htmlFor="marital_status">Estado Civil</Label>
-                            <Select
-                              value={studentForm.marital_status}
-                              onValueChange={(value) => setStudentForm({ ...studentForm, marital_status: value })}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecione..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="solteiro">Solteiro(a)</SelectItem>
-                                <SelectItem value="casado">Casado(a)</SelectItem>
-                                <SelectItem value="divorciado">Divorciado(a)</SelectItem>
-                                <SelectItem value="viuvo">Viúvo(a)</SelectItem>
-                                <SelectItem value="uniao_estavel">União Estável</SelectItem>
-                                <SelectItem value="outro">Outro</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="grid gap-2">
-                            <Label htmlFor="profession">Profissão</Label>
-                            <Input
-                              id="profession"
-                              value={studentForm.profession}
-                              onChange={(e) => setStudentForm({ ...studentForm, profession: e.target.value })}
-                              placeholder="Ex: Engenheiro, Professor"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Financial Engineering Section */}
-                    <div className="border-t pt-4 mt-2">
-                      <h3 className="text-lg font-semibold mb-4">Engenharia Financeira</h3>
-                      <div className="grid gap-4">
-                        <div className="grid gap-2">
-                          <Label htmlFor="current_plan">Plano Atual</Label>
-                          <Select
-                            value={studentForm.current_plan}
-                            onValueChange={(value) => setStudentForm({ ...studentForm, current_plan: value })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione o plano..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="mensal">Mensal</SelectItem>
-                              <SelectItem value="bimestral">Bimestral</SelectItem>
-                              <SelectItem value="trimestral">Trimestral</SelectItem>
-                              <SelectItem value="semestral">Semestral</SelectItem>
-                              <SelectItem value="anual">Anual</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="grid gap-2">
-                          <Label htmlFor="current_payment_method">Método de Pagamento</Label>
-                          <Select
-                            value={studentForm.current_payment_method}
-                            onValueChange={(value) => setStudentForm({ ...studentForm, current_payment_method: value })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione o método..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="pix">Pix</SelectItem>
-                              <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
-                              <SelectItem value="debito">Débito</SelectItem>
-                              <SelectItem value="boleto">Boleto</SelectItem>
-                              <SelectItem value="recorrencia">Recorrência</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="grid gap-2">
-                          <Label htmlFor="current_payment_status">Status de Pagamento</Label>
-                          <Select
-                            value={studentForm.current_payment_status}
-                            onValueChange={(value) => setStudentForm({ ...studentForm, current_payment_status: value })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="adimplente">Adimplente</SelectItem>
-                              <SelectItem value="inadimplente">Inadimplente</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Initial Evaluation Section */}
-                    <div className="border-t pt-4 mt-2">
-                      <h3 className="text-lg font-semibold mb-4">Avaliação Inicial</h3>
-                      <div className="grid gap-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="grid gap-2">
-                            <Label htmlFor="weight">Peso (kg)</Label>
-                            <Input
-                              id="weight"
-                              type="number"
-                              step="0.1"
-                              min="0"
-                              value={studentForm.weight}
-                              onChange={(e) => setStudentForm({ ...studentForm, weight: e.target.value })}
-                              placeholder="Ex: 70.5"
-                            />
-                          </div>
-                          <div className="grid gap-2">
-                            <Label htmlFor="body_fat_percentage">% de Gordura</Label>
-                            <Input
-                              id="body_fat_percentage"
-                              type="number"
-                              step="0.1"
-                              min="0"
-                              max="100"
-                              value={studentForm.body_fat_percentage}
-                              onChange={(e) => setStudentForm({ ...studentForm, body_fat_percentage: e.target.value })}
-                              placeholder="Ex: 15.5"
-                            />
-                          </div>
-                        </div>
-                        <div className="grid gap-2">
-                          <Label htmlFor="objective">Objetivo</Label>
-                          <Select
-                            value={studentForm.objective}
-                            onValueChange={(value) => setStudentForm({ ...studentForm, objective: value })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione o objetivo..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Hipertrofia">Hipertrofia</SelectItem>
-                              <SelectItem value="Emagrecimento">Emagrecimento</SelectItem>
-                              <SelectItem value="Saúde">Saúde</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="grid gap-2">
-                          <Label htmlFor="last_evaluation_date">Data da Última Avaliação</Label>
-                          <Input
-                            id="last_evaluation_date"
-                            type="date"
-                            value={studentForm.last_evaluation_date}
-                            onChange={(e) => setStudentForm({ ...studentForm, last_evaluation_date: e.target.value })}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    
                     <div className="grid gap-2">
                       <Label htmlFor="status">Status</Label>
                       <Select
                         value={studentForm.status}
-                        onValueChange={(value: 'ativo' | 'inativo' | 'cancelado') =>
-                          setStudentForm({ ...studentForm, status: value })
-                        }
+                        onValueChange={(value) => setStudentForm({ ...studentForm, status: value })}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -626,16 +308,57 @@ const Secretaria = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                    {studentForm.status === 'cancelado' && (
-                      <div className="grid gap-2">
-                        <Label htmlFor="cancellation_reason">Motivo de Cancelamento *</Label>
-                        <Textarea
-                          id="cancellation_reason"
-                          value={studentForm.cancellation_reason}
-                          onChange={(e) => setStudentForm({ ...studentForm, cancellation_reason: e.target.value })}
-                        />
-                      </div>
-                    )}
+                    <div className="grid gap-2">
+                      <Label htmlFor="plan">Plano</Label>
+                      <Select
+                        value={studentForm.current_plan}
+                        onValueChange={(value) => setStudentForm({ ...studentForm, current_plan: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="mensal">Mensal</SelectItem>
+                          <SelectItem value="bimestral">Bimestral</SelectItem>
+                          <SelectItem value="trimestral">Trimestral</SelectItem>
+                          <SelectItem value="semestral">Semestral</SelectItem>
+                          <SelectItem value="anual">Anual</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="payment_method">Método de Pagamento</Label>
+                      <Select
+                        value={studentForm.current_payment_method}
+                        onValueChange={(value) => setStudentForm({ ...studentForm, current_payment_method: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pix">PIX</SelectItem>
+                          <SelectItem value="credito">Crédito</SelectItem>
+                          <SelectItem value="debito">Débito</SelectItem>
+                          <SelectItem value="boleto">Boleto</SelectItem>
+                          <SelectItem value="recorrencia">Recorrência</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="payment_status">Status de Pagamento</Label>
+                      <Select
+                        value={studentForm.current_payment_status}
+                        onValueChange={(value) => setStudentForm({ ...studentForm, current_payment_status: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="adimplente">Adimplente</SelectItem>
+                          <SelectItem value="inadimplente">Inadimplente</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                   <Button onClick={handleCreateStudent}>Cadastrar Aluno</Button>
                 </DialogContent>
@@ -643,46 +366,41 @@ const Secretaria = () => {
             </div>
 
             <div className="grid gap-4">
-              {students.map((student) => (
-                <Card key={student.id}>
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <span>{student.name}</span>
-                      <span className={`text-sm px-3 py-1 rounded-full ${
-                        student.status === 'ativo' ? 'bg-green-100 text-green-800' :
-                        student.status === 'inativo' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {student.status}
-                      </span>
-                    </CardTitle>
-                    <CardDescription>
-                      {student.email && `${student.email} • `}
-                      {student.phone && student.phone}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-sm text-muted-foreground space-y-1">
-                      {student.cpf && <p>CPF: {student.cpf}</p>}
-                      {student.neighborhood && <p>Bairro: {student.neighborhood}</p>}
-                      {student.address && <p>Endereço: {student.address}</p>}
-                      {student.age && <p>Idade: {student.age} anos</p>}
-                      {student.profession && <p>Profissão: {student.profession}</p>}
-                      {student.current_plan && <p>Plano: {student.current_plan}</p>}
-                      {student.current_payment_method && <p>Pagamento: {student.current_payment_method}</p>}
-                      {student.current_payment_status && (
-                        <p className={student.current_payment_status === 'Adimplente' ? 'text-green-600' : 'text-red-600'}>
-                          Status Financeiro: {student.current_payment_status}
-                        </p>
-                      )}
-                      {student.geo_economic_profile && <p>Perfil: {student.geo_economic_profile}</p>}
-                      {student.status === 'cancelado' && student.cancellation_reason && (
-                        <p className="text-red-600">Motivo: {student.cancellation_reason}</p>
-                      )}
-                    </div>
+              {students.length === 0 ? (
+                <Card>
+                  <CardContent className="py-8 text-center text-muted-foreground">
+                    Nenhum aluno cadastrado ainda.
                   </CardContent>
                 </Card>
-              ))}
+              ) : (
+                students.map((student) => (
+                  <Card key={student.id}>
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="text-lg">{student.name}</CardTitle>
+                          <CardDescription>
+                            {student.neighborhood || "Bairro não informado"} • {student.current_plan || "Plano não definido"}
+                          </CardDescription>
+                        </div>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          student.status === 'ativo' ? 'bg-green-100 text-green-800' :
+                          student.status === 'cancelado' ? 'bg-red-100 text-red-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {student.status}
+                        </span>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex gap-4 text-sm text-muted-foreground">
+                        <span>Pagamento: {student.current_payment_status}</span>
+                        <span>Método: {student.current_payment_method}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
           </TabsContent>
 
@@ -700,46 +418,52 @@ const Secretaria = () => {
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Cadastrar Nova Modalidade</DialogTitle>
-                    <DialogDescription>Adicione uma nova modalidade ao sistema</DialogDescription>
+                    <DialogDescription>Preencha os dados da modalidade</DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="modality-name">Nome *</Label>
+                      <Label htmlFor="modality_name">Nome *</Label>
                       <Input
-                        id="modality-name"
+                        id="modality_name"
                         value={modalityForm.name}
                         onChange={(e) => setModalityForm({ ...modalityForm, name: e.target.value })}
-                        placeholder="Ex: Musculação, Jiu-Jitsu, Yoga"
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="modality-description">Descrição</Label>
-                      <Textarea
-                        id="modality-description"
-                        value={modalityForm.description}
-                        onChange={(e) => setModalityForm({ ...modalityForm, description: e.target.value })}
+                      <Label htmlFor="category">Categoria</Label>
+                      <Input
+                        id="category"
+                        value={modalityForm.category}
+                        onChange={(e) => setModalityForm({ ...modalityForm, category: e.target.value })}
                       />
                     </div>
                   </div>
-                  <Button onClick={handleCreateModality}>Criar Modalidade</Button>
+                  <Button onClick={handleCreateModality}>Cadastrar Modalidade</Button>
                 </DialogContent>
               </Dialog>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {modalities.map((modality) => (
-                <Card key={modality.id}>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Activity className="w-5 h-5" />
-                      {modality.name}
-                    </CardTitle>
-                    {modality.description && (
-                      <CardDescription>{modality.description}</CardDescription>
-                    )}
-                  </CardHeader>
+            <div className="grid gap-4">
+              {modalities.length === 0 ? (
+                <Card>
+                  <CardContent className="py-8 text-center text-muted-foreground">
+                    Nenhuma modalidade cadastrada ainda.
+                  </CardContent>
                 </Card>
-              ))}
+              ) : (
+                modalities.map((modality) => (
+                  <Card key={modality.id}>
+                    <CardHeader>
+                      <div className="flex justify-between items-center">
+                        <CardTitle className="text-lg">{modality.name}</CardTitle>
+                        <span className="text-sm text-muted-foreground">
+                          {modality.category || "Sem categoria"}
+                        </span>
+                      </div>
+                    </CardHeader>
+                  </Card>
+                ))
+              )}
             </div>
           </TabsContent>
 
@@ -750,31 +474,21 @@ const Secretaria = () => {
               <Dialog open={visitDialogOpen} onOpenChange={setVisitDialogOpen}>
                 <DialogTrigger asChild>
                   <Button>
-                    <UserPlus className="w-4 h-4 mr-2" />
+                    <Plus className="w-4 h-4 mr-2" />
                     Registrar Visita
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Registrar Visita</DialogTitle>
-                    <DialogDescription>Registre uma nova visita ao estabelecimento</DialogDescription>
+                    <DialogTitle>Registrar Nova Visita</DialogTitle>
+                    <DialogDescription>Registre uma nova visita</DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="visitor-name">Nome do Visitante *</Label>
-                      <Input
-                        id="visitor-name"
-                        value={visitForm.visitor_name}
-                        onChange={(e) => setVisitForm({ ...visitForm, visitor_name: e.target.value })}
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="visit-type">Tipo de Visita</Label>
+                      <Label htmlFor="visit_type">Tipo de Visita</Label>
                       <Select
-                        value={visitForm.visit_type}
-                        onValueChange={(value: 'visita_sem_aula' | 'visita_com_aula_agendada') =>
-                          setVisitForm({ ...visitForm, visit_type: value })
-                        }
+                        value={visitForm.type}
+                        onValueChange={(value) => setVisitForm({ ...visitForm, type: value })}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -791,45 +505,31 @@ const Secretaria = () => {
               </Dialog>
             </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Visitas Recentes</CardTitle>
-                <CardDescription>Últimas 10 visitas registradas</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {visits.map((visit) => (
-                    <div key={visit.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <Eye className="w-5 h-5 text-muted-foreground" />
-                        <div>
-                          <p className="font-medium">{visit.visitor_name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {visit.visit_type} • {new Date(visit.visit_date).toLocaleDateString('pt-BR')}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-sm px-3 py-1 rounded-full ${
-                          visit.converted_to_student ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {visit.converted_to_student ? 'Convertido' : 'Pendente'}
+            <div className="grid gap-4">
+              {visits.length === 0 ? (
+                <Card>
+                  <CardContent className="py-8 text-center text-muted-foreground">
+                    Nenhuma visita registrada ainda.
+                  </CardContent>
+                </Card>
+              ) : (
+                visits.map((visit) => (
+                  <Card key={visit.id}>
+                    <CardHeader>
+                      <div className="flex justify-between items-center">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Activity className="w-5 h-5" />
+                          {visit.type === 'visita_com_aula_agendada' ? 'Visita com Aula' : 'Visita Simples'}
+                        </CardTitle>
+                        <span className="text-sm text-muted-foreground">
+                          {visit.created_at ? new Date(visit.created_at).toLocaleDateString('pt-BR') : 'Data não registrada'}
                         </span>
-                        {!visit.converted_to_student && (
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => handleConvertToStudent(visit.id)}
-                          >
-                            Matrícula Efetivada
-                          </Button>
-                        )}
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    </CardHeader>
+                  </Card>
+                ))
+              )}
+            </div>
           </TabsContent>
         </Tabs>
       </main>

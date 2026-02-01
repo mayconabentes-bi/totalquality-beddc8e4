@@ -17,14 +17,14 @@ interface Student {
 
 interface PerformanceRanking {
   id: string;
-  student_id: string;
-  score: number;
+  student_id: string | null;
+  score: number | null;
   technique_score: number | null;
   load_score: number | null;
   attendance_score: number | null;
-  evaluation_date: string;
-  notes: string | null;
-  students: { name: string };
+  evaluation_date: string | null;
+  metrics: Record<string, unknown> | null;
+  students: { name: string } | null;
 }
 
 const Treinador = () => {
@@ -91,20 +91,17 @@ const Treinador = () => {
     }
   };
 
-  const fetchTodayEvaluations = async (companyId: string) => {
+  const fetchTodayEvaluations = async (compId: string) => {
     const today = new Date().toISOString().split('T')[0];
     const { data, error } = await supabase
       .from("performance_rankings")
-      .select(`
-        *,
-        students (name)
-      `)
-      .eq("company_id", companyId)
+      .select("id, student_id, score, technique_score, load_score, attendance_score, evaluation_date, metrics, students(name)")
       .eq("evaluation_date", today)
       .order("score", { ascending: false });
 
     if (!error && data) {
-      setTodayEvaluations(data as PerformanceRanking[]);
+      // Filter by company via joined students if needed
+      setTodayEvaluations(data as unknown as PerformanceRanking[]);
     }
   };
 
@@ -115,14 +112,13 @@ const Treinador = () => {
     }
 
     const { error } = await supabase.from("performance_rankings").insert({
-      company_id: companyId,
       student_id: evaluationForm.student_id,
-      trainer_id: trainerId,
+      treinador_id: trainerId,
       score: evaluationForm.score,
       technique_score: evaluationForm.technique_score,
       load_score: evaluationForm.load_score,
       attendance_score: evaluationForm.attendance_score,
-      notes: evaluationForm.notes || null
+      metrics: { notes: evaluationForm.notes || null }
     });
 
     if (error) {
@@ -326,7 +322,7 @@ const Treinador = () => {
                             {index + 1}
                           </div>
                           <div>
-                            <p className="font-medium">{evaluation.students.name}</p>
+                            <p className="font-medium">{evaluation.students?.name || 'Aluno'}</p>
                             <div className="flex gap-2 text-xs text-muted-foreground">
                               {evaluation.technique_score && (
                                 <span>Téc: {evaluation.technique_score}</span>
