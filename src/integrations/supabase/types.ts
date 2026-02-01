@@ -226,6 +226,218 @@ export type Database = {
           },
         ]
       }
+      modalities: {
+        Row: {
+          id: string
+          company_id: string
+          name: string
+          description: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          name: string
+          description?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          name?: string
+          description?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "modalities_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      students: {
+        Row: {
+          id: string
+          company_id: string
+          name: string
+          cpf: string | null
+          address: string | null
+          phone: string | null
+          email: string | null
+          status: 'Ativo' | 'Inativo' | 'Cancelado'
+          cancellation_reason: string | null
+          dependents: Json
+          geo_economic_profile: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          name: string
+          cpf?: string | null
+          address?: string | null
+          phone?: string | null
+          email?: string | null
+          status?: 'Ativo' | 'Inativo' | 'Cancelado'
+          cancellation_reason?: string | null
+          dependents?: Json
+          geo_economic_profile?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          name?: string
+          cpf?: string | null
+          address?: string | null
+          phone?: string | null
+          email?: string | null
+          status?: 'Ativo' | 'Inativo' | 'Cancelado'
+          cancellation_reason?: string | null
+          dependents?: Json
+          geo_economic_profile?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "students_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_flow: {
+        Row: {
+          id: string
+          company_id: string
+          visitor_name: string
+          visit_type: 'Visita sem Aula' | 'Visita com Aula Agendada'
+          visit_date: string
+          converted_to_student: boolean
+          student_id: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          visitor_name: string
+          visit_type: 'Visita sem Aula' | 'Visita com Aula Agendada'
+          visit_date?: string
+          converted_to_student?: boolean
+          student_id?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          visitor_name?: string
+          visit_type?: 'Visita sem Aula' | 'Visita com Aula Agendada'
+          visit_date?: string
+          converted_to_student?: boolean
+          student_id?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_flow_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_flow_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      performance_rankings: {
+        Row: {
+          id: string
+          company_id: string
+          student_id: string
+          trainer_id: string
+          evaluation_date: string
+          score: number
+          technique_score: number | null
+          load_score: number | null
+          attendance_score: number | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          student_id: string
+          trainer_id: string
+          evaluation_date?: string
+          score: number
+          technique_score?: number | null
+          load_score?: number | null
+          attendance_score?: number | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          student_id?: string
+          trainer_id?: string
+          evaluation_date?: string
+          score?: number
+          technique_score?: number | null
+          load_score?: number | null
+          attendance_score?: number | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "performance_rankings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "performance_rankings_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "performance_rankings_trainer_id_fkey"
+            columns: ["trainer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

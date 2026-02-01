@@ -31,7 +31,9 @@ import {
   ArrowLeft,
   Settings2,
   Brain,
-  LineChart
+  LineChart,
+  UserPlus,
+  Users as UsersIcon
 } from "lucide-react";
 import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
@@ -89,6 +91,16 @@ const Settings = () => {
   const [cac, setCac] = useState("");
   const [ebitdaProjetado, setEbitdaProjetado] = useState("");
 
+  // User management state
+  const [userDialogOpen, setUserDialogOpen] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<Profile[]>([]);
+  const [newUserForm, setNewUserForm] = useState({
+    email: "",
+    password: "",
+    full_name: "",
+    role: ""
+  });
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
@@ -134,12 +146,78 @@ const Settings = () => {
           if (companyData) {
             setCompany(companyData);
           }
+          
+          // Fetch team members for master and proprietario roles
+          if (profileData.role === 'master' || profileData.role === 'proprietario') {
+            const { data: teamData } = await supabase
+              .from("profiles")
+              .select("*")
+              .eq("company_id", profileData.company_id)
+              .order("full_name");
+
+            if (teamData) {
+              setTeamMembers(teamData);
+            }
+          }
         }
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchTeamMembers = async () => {
+    if (!profile?.company_id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("company_id", profile.company_id)
+        .order("full_name");
+
+      if (!error && data) {
+        setTeamMembers(data);
+      }
+    } catch (error) {
+      console.error("Error fetching team members:", error);
+    }
+  };
+
+  const handleCreateUser = async () => {
+    if (!newUserForm.email || !newUserForm.password || !newUserForm.full_name || !newUserForm.role) {
+      toast.error("Todos os campos são obrigatórios");
+      return;
+    }
+
+    if (!profile?.company_id) {
+      toast.error("Empresa não identificada");
+      return;
+    }
+
+    try {
+      // Note: In production, user creation requires a Supabase Edge Function or Admin API
+      // This is because client-side code cannot securely create users with email/password
+      // 
+      // To implement this:
+      // 1. Create a Supabase Edge Function that uses the Admin API
+      // 2. The function should:
+      //    - Create the user with supabase.auth.admin.createUser()
+      //    - Create the profile entry with the company_id and role
+      //    - Send a password reset email or set a temporary password
+      // 3. Call that edge function from here instead of showing this message
+      
+      toast.warning("Funcionalidade de criação de usuário requer implementação server-side", {
+        duration: 5000
+      });
+      toast.info("Para criar usuários, utilize o painel de administração do Supabase ou implemente uma Edge Function", {
+        duration: 5000
+      });
+    } catch (error) {
+      console.error("Error creating user:", error);
+      toast.error("Erro ao criar usuário");
     }
   };
 
@@ -341,6 +419,62 @@ const Settings = () => {
           </div>
         </div>
 
+        {/* User Management Section - Only for master and proprietario */}
+        {(profile?.role === 'master' || profile?.role === 'proprietario') && (
+          <div className="bg-card rounded-xl border border-border/50 shadow-soft p-6 mb-6">
+            <div className="flex items-start justify-between mb-6">
+              <div>
+                <h2 className="font-display text-xl font-semibold text-foreground mb-2">
+                  Gestão de Equipe
+                </h2>
+                <p className="text-muted-foreground">
+                  Gerencie os membros da sua equipe e suas permissões
+                </p>
+              </div>
+              <Button onClick={() => setUserDialogOpen(true)} className="gap-2">
+                <UserPlus className="w-4 h-4" />
+                Novo Usuário
+              </Button>
+            </div>
+
+            {/* Team Members List */}
+            <div className="space-y-3">
+              {teamMembers.map((member) => (
+                <div 
+                  key={member.id}
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <UsersIcon className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{member.full_name || "Sem nome"}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {member.role || "Sem role"} • ID: {member.id.substring(0, 8)}...
+                      </p>
+                    </div>
+                  </div>
+                  <span className={`text-sm px-3 py-1 rounded-full ${
+                    member.role === 'master' ? 'bg-purple-100 text-purple-800' :
+                    member.role === 'proprietario' ? 'bg-blue-100 text-blue-800' :
+                    member.role === 'secretaria' ? 'bg-green-100 text-green-800' :
+                    member.role === 'treinador' ? 'bg-orange-100 text-orange-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {member.role}
+                  </span>
+                </div>
+              ))}
+              {teamMembers.length === 0 && (
+                <p className="text-center text-muted-foreground py-8">
+                  Nenhum membro da equipe encontrado
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Edit Dialog */}
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -486,6 +620,89 @@ const Settings = () => {
               </Button>
               <Button onClick={handleSaveData}>
                 Salvar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* User Creation Dialog */}
+        <Dialog open={userDialogOpen} onOpenChange={setUserDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Criar Novo Usuário</DialogTitle>
+              <DialogDescription>
+                Adicione um novo membro à equipe e atribua uma função
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              {/* Warning banner */}
+              <div className="p-3 border border-yellow-200 bg-yellow-50 rounded-lg">
+                <p className="text-sm text-yellow-800">
+                  ⚠️ <strong>Nota:</strong> A criação de usuários requer implementação server-side via Supabase Edge Function. 
+                  Por enquanto, use o painel de administração do Supabase para criar usuários manualmente.
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="user-email">Email *</Label>
+                <Input
+                  id="user-email"
+                  type="email"
+                  value={newUserForm.email}
+                  onChange={(e) => setNewUserForm({ ...newUserForm, email: e.target.value })}
+                  placeholder="usuario@exemplo.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="user-password">Senha *</Label>
+                <Input
+                  id="user-password"
+                  type="password"
+                  value={newUserForm.password}
+                  onChange={(e) => setNewUserForm({ ...newUserForm, password: e.target.value })}
+                  placeholder="Mínimo 6 caracteres"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="user-name">Nome Completo *</Label>
+                <Input
+                  id="user-name"
+                  value={newUserForm.full_name}
+                  onChange={(e) => setNewUserForm({ ...newUserForm, full_name: e.target.value })}
+                  placeholder="Nome do usuário"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="user-role">Função *</Label>
+                <Select
+                  value={newUserForm.role}
+                  onValueChange={(value) => setNewUserForm({ ...newUserForm, role: value })}
+                >
+                  <SelectTrigger id="user-role">
+                    <SelectValue placeholder="Selecione uma função" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="secretaria">Secretaria</SelectItem>
+                    <SelectItem value="treinador">Treinador</SelectItem>
+                    <SelectItem value="recepcionista">Recepcionista</SelectItem>
+                    <SelectItem value="manutencao">Manutenção</SelectItem>
+                    {profile?.role === 'master' && (
+                      <>
+                        <SelectItem value="proprietario">Proprietário</SelectItem>
+                        <SelectItem value="auditor">Auditor</SelectItem>
+                        <SelectItem value="empresa">Empresa</SelectItem>
+                      </>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setUserDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleCreateUser}>
+                Criar Usuário
               </Button>
             </DialogFooter>
           </DialogContent>
