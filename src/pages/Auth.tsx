@@ -179,8 +179,8 @@ const Auth = () => {
           .insert({
             user_id: authData.user.id,
             full_name: fullName.trim(),
-            role: selectedRole,
             company_id: companyData.id,
+            role: selectedRole,
           });
 
         if (profileError) {
