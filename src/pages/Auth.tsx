@@ -30,6 +30,7 @@ const Auth = () => {
   const [mode, setMode] = useState<AuthMode>("signup");
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isCreatingProfile, setIsCreatingProfile] = useState(false);
   
   // Form state
   const [email, setEmail] = useState("");
@@ -42,20 +43,39 @@ const Auth = () => {
 
   useEffect(() => {
     // Check if user is already logged in
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
-        navigate("/dashboard");
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Only redirect if we have a session and we're not currently creating a profile
+      if (session?.user && !isCreatingProfile) {
+        // Verify profile exists before redirecting
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("user_id", session.user.id)
+          .single();
+        
+        if (profile) {
+          navigate("/dashboard");
+        }
       }
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        navigate("/dashboard");
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user && !isCreatingProfile) {
+        // Verify profile exists before redirecting
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("user_id", session.user.id)
+          .single();
+        
+        if (profile) {
+          navigate("/dashboard");
+        }
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, isCreatingProfile]);
 
   const clearErrors = () => setErrors({});
 
@@ -118,66 +138,74 @@ const Auth = () => {
     }
 
     setLoading(true);
+    setIsCreatingProfile(true);
 
     const redirectUrl = `${window.location.origin}/dashboard`;
 
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: email.trim(),
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          full_name: fullName.trim(),
-          company_name: companyName.trim(),
+    try {
+      // Step 1: Create user account
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            full_name: fullName.trim(),
+            company_name: companyName.trim(),
+          }
         }
-      }
-    });
+      });
 
-    if (authError) {
-      if (authError.message.includes("already registered")) {
-        toast.error("Este email já está cadastrado. Faça login ou use outro email.");
-      } else {
-        toast.error(authError.message);
+      if (authError) {
+        if (authError.message.includes("already registered")) {
+          toast.error("Este email já está cadastrado. Faça login ou use outro email.");
+        } else {
+          toast.error(authError.message);
+        }
+        return;
       }
+
+      if (authData.user) {
+        // Step 2: Create company and profile in sequence as a logical transaction
+        const { data: companyData, error: companyError } = await supabase
+          .from("companies")
+          .insert({
+            user_id: authData.user.id,
+            name: companyName.trim(),
+            phone: phone.trim() || null,
+          })
+          .select()
+          .single();
+
+        if (companyError) {
+          console.error("Error creating company:", companyError);
+          toast.error("Erro ao criar registro da empresa");
+          return;
+        }
+
+        // Step 3: Create profile with company_id
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .insert({
+            user_id: authData.user.id,
+            full_name: fullName.trim(),
+            company_id: companyData?.id || null,
+            role: selectedRole,
+          });
+
+        if (profileError) {
+          console.error("Error creating profile:", profileError);
+          toast.error("Erro ao criar perfil");
+          return;
+        }
+
+        toast.success("Conta criada com sucesso! Verifique seu email para confirmar.");
+        setMode("login");
+      }
+    } finally {
       setLoading(false);
-      return;
+      setIsCreatingProfile(false);
     }
-
-    if (authData.user) {
-      // Create company record
-      const { data: companyData, error: companyError } = await supabase
-        .from("companies")
-        .insert({
-          user_id: authData.user.id,
-          name: companyName.trim(),
-          phone: phone.trim() || null,
-        })
-        .select()
-        .single();
-
-      if (companyError) {
-        console.error("Error creating company:", companyError);
-      }
-
-      // Create profile record
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .insert({
-          user_id: authData.user.id,
-          full_name: fullName.trim(),
-          company_id: companyData?.id || null,
-          role: selectedRole,
-        });
-
-      if (profileError) {
-        console.error("Error creating profile:", profileError);
-      }
-
-      toast.success("Conta criada com sucesso! Verifique seu email para confirmar.");
-      setMode("login");
-    }
-
-    setLoading(false);
   };
 
   return (
