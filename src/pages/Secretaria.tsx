@@ -227,9 +227,9 @@ const Secretaria = () => {
       marital_status: studentForm.marital_status || null,
       profession: studentForm.profession || null,
       // New financial fields
-      current_plan: studentForm.current_plan || null,
-      current_payment_method: studentForm.current_payment_method || null,
-      current_payment_status: studentForm.current_payment_status || null
+      current_plan: studentForm.current_plan ? studentForm.current_plan.toLowerCase() : null,
+      current_payment_method: studentForm.current_payment_method ? studentForm.current_payment_method.toLowerCase() : null,
+      current_payment_status: studentForm.current_payment_status ? studentForm.current_payment_status.toLowerCase() : null
     });
 
     if (error) {
