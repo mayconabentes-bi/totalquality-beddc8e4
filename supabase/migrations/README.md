@@ -8,6 +8,46 @@ Migrations are applied in chronological order based on their timestamp prefix (f
 
 ## Recent Important Migrations
 
+### 20260201190240_bloco1_totalquality_master.sql
+**Purpose**: Implements Bloco 1 (Block 1) migration for Total Quality Master system - Area Fit Infrastructure
+
+**Key Changes**:
+
+1. **Companies Table Migration**:
+   - Added `logo_url` (TEXT, nullable): Stores company logo URL
+   - Added `market_intelligence` (JSONB, default: {}): Market intelligence data structure with expected fields:
+     - `cnae_principal`: Primary CNAE (economic activity classification)
+     - `setor_atuacao`: Sector of operation
+     - `geolocalizacao`: Geolocation data (latitude/longitude)
+     - `densidade_demografica_local`: Local demographic density
+     - `indice_concorrencia`: Competition index
+   - Added `statistical_studies` (JSONB, default: {}): Statistical profitability metrics:
+     - `churn_rate`: Customer cancellation rate
+     - `margin_per_student`: Profit margin per student/customer
+     - `clv`: Customer Lifetime Value
+     - `cac`: Customer Acquisition Cost
+     - `ebitda_projetado`: Projected EBITDA
+
+2. **Profiles Table Evolution**:
+   - Extended role constraint to include Area Fit operational profiles:
+     - `master`: System master with full access
+     - `proprietario`: Owner with full access to their own company
+     - `recepcionista`: Receptionist
+     - `professor`: Teacher/Instructor
+     - `manutencao`: Maintenance staff
+     - `estacionamento`: Parking staff
+   - Added `status_homologacao` (BOOLEAN, default: false): Controls initial access after training completion
+
+3. **Governance and RLS Policies**:
+   - **Master Role**: Full access (ALL operations) to all companies in the system
+   - **Proprietario Role**: Full access (SELECT, UPDATE, DELETE, INSERT) only to their own `company_id`
+
+**Implementation Notes**:
+- All ALTER TABLE commands use `IF NOT EXISTS` to ensure idempotent migrations
+- Existing roles (`auditor`, `empresa`, `total_quality_iso`) are maintained in the constraint
+- RLS policies are dropped and recreated to avoid conflicts
+- TypeScript types in `src/integrations/supabase/types.ts` have been synchronized
+
 ### 20260201162524_fix_rls_policies_for_cadastro.sql
 **Purpose**: Fixes 401/RLS errors during user signup process
 
