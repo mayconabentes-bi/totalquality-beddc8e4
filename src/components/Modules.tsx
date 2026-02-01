@@ -40,7 +40,33 @@ const modules = [
   }
 ];
 
-const Modules = () => {
+interface ModulesProps {
+  role?: string | null;
+}
+
+const Modules = ({ role }: ModulesProps = {}) => {
+  // Filter modules based on role
+  const getVisibleModules = () => {
+    if (!role) {
+      // If no role is provided (e.g., public page), show all modules
+      return modules;
+    }
+
+    return modules.filter((module) => {
+      // Hide "Documentos" for 'auditor' role
+      if (role === 'auditor' && module.title === 'Documentos') {
+        return false;
+      }
+      // Hide "Auditorias" for 'empresa' role
+      if (role === 'empresa' && module.title === 'Auditorias') {
+        return false;
+      }
+      // total_quality_iso sees everything
+      return true;
+    });
+  };
+
+  const visibleModules = getVisibleModules();
   return (
     <section id="modules" className="py-20 lg:py-28 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -61,7 +87,7 @@ const Modules = () => {
 
         {/* Modules Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-          {modules.map((module, index) => (
+          {visibleModules.map((module, index) => (
             <ModuleCard key={module.title} {...module} delay={index * 0.1} />
           ))}
         </div>
