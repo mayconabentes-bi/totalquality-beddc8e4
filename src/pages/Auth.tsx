@@ -67,7 +67,11 @@ const Auth = () => {
         } else if (session?.user && !profile && !isCreatingProfileRef.current) {
           // User is logged in but has no profile - sign out to prevent infinite redirect loop
           console.log("User logged in without profile, signing out to prevent redirect loop");
-          await supabase.auth.signOut();
+          try {
+            await supabase.auth.signOut();
+          } catch (signOutError) {
+            console.error("Error during session cleanup:", signOutError);
+          }
         }
       }
     });
@@ -90,7 +94,11 @@ const Auth = () => {
         } else if (session?.user && !profile && !isCreatingProfileRef.current) {
           // User is logged in but has no profile - sign out to prevent infinite redirect loop
           console.log("User logged in without profile, signing out to prevent redirect loop");
-          await supabase.auth.signOut();
+          try {
+            await supabase.auth.signOut();
+          } catch (signOutError) {
+            console.error("Error during session cleanup:", signOutError);
+          }
         }
       }
     });
@@ -300,40 +308,27 @@ const Auth = () => {
       // Check if error is from the overall timeout
       const errorMessage = error instanceof Error ? error.message : String(error);
       
+      // For any error after user creation, perform auto-cleanup to remove partial session
+      if (userCreated) {
+        try {
+          console.log("Auto-cleanup: signing out user due to incomplete registration");
+          await supabase.auth.signOut();
+        } catch (signOutError) {
+          console.error("Error during auto-cleanup signOut:", signOutError);
+        }
+      }
+      
+      // Provide user-friendly error messages
       if (errorMessage === "SIGNUP_TIMEOUT") {
-        // Overall timeout - reset loading and show friendly message
         toast.error("A conexão falhou. Por favor, verifique a rede ou tente novamente");
-        
-        // If user was created before timeout, sign them out
-        if (userCreated) {
-          try {
-            console.log("Timeout cleanup: signing out user due to incomplete registration");
-            await supabase.auth.signOut();
-          } catch (signOutError) {
-            console.error("Error during timeout cleanup signOut:", signOutError);
-          }
-        }
+      } else if (errorMessage.includes("already registered") || errorMessage.includes("User already registered")) {
+        toast.error("Este email já está cadastrado. Faça login ou use outro email.");
+      } else if (errorMessage.includes("Timeout")) {
+        toast.error(`Operação demorou muito (${failedStep}). Por favor, tente novamente.`);
+      } else if (failedStep) {
+        toast.error(`Erro na etapa de ${failedStep}: ${errorMessage}`);
       } else {
-        // For any other error after user creation, perform auto-cleanup to remove partial session
-        if (userCreated) {
-          try {
-            console.log("Auto-cleanup: signing out user due to incomplete registration");
-            await supabase.auth.signOut();
-          } catch (signOutError) {
-            console.error("Error during auto-cleanup signOut:", signOutError);
-          }
-        }
-        
-        // Provide user-friendly error messages with clear step indication
-        if (errorMessage.includes("already registered") || errorMessage.includes("User already registered")) {
-          toast.error("Este email já está cadastrado. Faça login ou use outro email.");
-        } else if (errorMessage.includes("Timeout")) {
-          toast.error(`Operação demorou muito (${failedStep}). Por favor, tente novamente.`);
-        } else if (failedStep) {
-          toast.error(`Erro na etapa de ${failedStep}: ${errorMessage}`);
-        } else {
-          toast.error(errorMessage);
-        }
+        toast.error(errorMessage);
       }
     } finally {
       // Forced UI reset: Execute before any other logic to ensure button state returns to normal
