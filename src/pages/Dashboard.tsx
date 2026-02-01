@@ -211,24 +211,30 @@ const Dashboard = () => {
             Módulos do Sistema
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <ModuleCard 
-              icon={FileText}
-              title="Documentos"
-              description="Gerencie documentos, versões e aprovações"
-              items={["0 documentos", "0 pendentes"]}
-            />
+            {/* Documentos - Hidden for 'auditor' role */}
+            {profile?.role !== 'auditor' && (
+              <ModuleCard 
+                icon={FileText}
+                title="Documentos"
+                description="Gerencie documentos, versões e aprovações"
+                items={["0 documentos", "0 pendentes"]}
+              />
+            )}
             <ModuleCard 
               icon={AlertTriangle}
               title="Não Conformidades"
               description="Registre e trate não conformidades"
               items={["0 abertas", "0 em tratamento"]}
             />
-            <ModuleCard 
-              icon={ClipboardCheck}
-              title="Auditorias"
-              description="Planeje e execute auditorias internas"
-              items={["0 programadas", "0 realizadas"]}
-            />
+            {/* Auditorias - Hidden for 'empresa' role */}
+            {profile?.role !== 'empresa' && (
+              <ModuleCard 
+                icon={ClipboardCheck}
+                title="Auditorias"
+                description="Planeje e execute auditorias internas"
+                items={["0 programadas", "0 realizadas"]}
+              />
+            )}
             <ModuleCard 
               icon={BarChart3}
               title="Indicadores"
@@ -241,12 +247,15 @@ const Dashboard = () => {
               description="Gerencie competências e capacitações"
               items={["0 treinamentos", "0 vencendo"]}
             />
-            <ModuleCard 
-              icon={Building2}
-              title="Configurações"
-              description="Configure sua empresa e usuários"
-              items={["Perfil", "Usuários"]}
-            />
+            {/* Configurações - Hidden for 'empresa' role */}
+            {profile?.role !== 'empresa' && (
+              <ModuleCard 
+                icon={Building2}
+                title="Configurações"
+                description="Configure sua empresa e usuários"
+                items={["Perfil", "Usuários"]}
+              />
+            )}
           </div>
         </div>
       </main>
