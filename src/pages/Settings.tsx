@@ -132,7 +132,7 @@ const Settings = () => {
     complemento: "",
     bairro: "",
     capital_social: "",
-    telefone: "",
+    phone: "",
     email: ""
   });
 
@@ -340,8 +340,8 @@ const Settings = () => {
       // Prepare statistical_studies JSONB with capital_social
       const statisticalStudies: StatisticalStudies = {};
       if (newCompanyForm.capital_social) {
-        const capitalValue = parseFloat(newCompanyForm.capital_social.replace(/[^\d,.-]/g, '').replace(',', '.'));
-        if (!isNaN(capitalValue)) {
+        const capitalValue = parseFloat(newCompanyForm.capital_social.replace(/[^\d,.]/g, '').replace(',', '.'));
+        if (!isNaN(capitalValue) && capitalValue >= 0) {
           statisticalStudies.capital_social = capitalValue;
         }
       }
@@ -357,7 +357,7 @@ const Settings = () => {
           nome_fantasia: newCompanyForm.nome_fantasia || null,
           data_abertura: newCompanyForm.data_abertura || null,
           email: newCompanyForm.email || null,
-          phone: newCompanyForm.telefone || null,
+          phone: newCompanyForm.phone || null,
           full_address: fullAddress,
           statistical_studies: statisticalStudies,
         })
@@ -382,7 +382,7 @@ const Settings = () => {
           complemento: "",
           bairro: "",
           capital_social: "",
-          telefone: "",
+          phone: "",
           email: ""
         });
         // Refresh companies list
@@ -1059,11 +1059,11 @@ const Settings = () => {
                 <h3 className="font-semibold text-foreground border-b pb-2">Contatos</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="company-telefone">Telefone</Label>
+                    <Label htmlFor="company-phone">Telefone</Label>
                     <Input
-                      id="company-telefone"
-                      value={newCompanyForm.telefone}
-                      onChange={(e) => setNewCompanyForm({ ...newCompanyForm, telefone: e.target.value })}
+                      id="company-phone"
+                      value={newCompanyForm.phone}
+                      onChange={(e) => setNewCompanyForm({ ...newCompanyForm, phone: e.target.value })}
                       placeholder="(00) 00000-0000"
                     />
                   </div>
