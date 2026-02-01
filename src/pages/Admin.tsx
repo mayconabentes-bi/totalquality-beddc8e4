@@ -23,8 +23,8 @@ interface Company {
   id: string;
   name: string;
   cnpj: string | null;
-  market_intelligence: any;
-  statistical_studies: any;
+  market_intelligence: unknown;
+  statistical_studies: unknown;
 }
 
 const Admin = () => {
@@ -62,7 +62,7 @@ const Admin = () => {
     navigate("/");
   };
 
-  const hasData = (jsonData: any): boolean => {
+  const hasData = (jsonData: unknown): boolean => {
     if (!jsonData) return false;
     if (typeof jsonData === 'object' && Object.keys(jsonData).length === 0) return false;
     return true;
@@ -131,8 +131,8 @@ const Admin = () => {
               <TableRow>
                 <TableHead>Nome da Empresa</TableHead>
                 <TableHead>CNPJ</TableHead>
-                <TableHead className="text-center">Inteligência de Mercado</TableHead>
-                <TableHead className="text-center">Estudos Estatísticos</TableHead>
+                <TableHead className="text-center" aria-label="Status de Inteligência de Mercado">Inteligência de Mercado</TableHead>
+                <TableHead className="text-center" aria-label="Status de Estudos Estatísticos">Estudos Estatísticos</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

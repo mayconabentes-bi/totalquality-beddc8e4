@@ -220,7 +220,7 @@ const Dashboard = () => {
             Módulos do Sistema
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Documentos - Hidden for 'auditor' role, visible for 'master' */}
+            {/* Documentos - Master role can see all modules; other roles: hidden for 'auditor' */}
             {(profile?.role === 'master' || profile?.role !== 'auditor') && (
               <ModuleCard 
                 icon={FileText}
@@ -235,7 +235,7 @@ const Dashboard = () => {
               description="Registre e trate não conformidades"
               items={["0 abertas", "0 em tratamento"]}
             />
-            {/* Auditorias - Hidden for 'empresa' role, visible for 'master' */}
+            {/* Auditorias - Master role can see all modules; other roles: hidden for 'empresa' */}
             {(profile?.role === 'master' || profile?.role !== 'empresa') && (
               <ModuleCard 
                 icon={ClipboardCheck}
@@ -256,7 +256,7 @@ const Dashboard = () => {
               description="Gerencie competências e capacitações"
               items={["0 treinamentos", "0 vencendo"]}
             />
-            {/* Configurações - Hidden for 'empresa' role, visible for 'master' */}
+            {/* Configurações - Master role can see all modules; other roles: hidden for 'empresa' */}
             {(profile?.role === 'master' || profile?.role !== 'empresa') && (
               <ModuleCard 
                 icon={Building2}
