@@ -28,6 +28,14 @@ const App = () => (
               </ProtectedRoute>
             } 
           />
+          <Route 
+            path="/auditoria" 
+            element={
+              <ProtectedRoute allowedRoles={['auditor', 'total_quality_iso']}>
+                <div className="p-8">Painel de Auditoria ISO</div>
+              </ProtectedRoute>
+            } 
+          />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
