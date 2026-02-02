@@ -296,12 +296,13 @@ const Settings = () => {
   const getFilteredTeamMembers = () => {
     let filtered = teamMembers;
 
-    // Filter by search query (name or email)
+    // Filter by search query (name, email, or ID)
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(member => 
         (member.full_name?.toLowerCase().includes(query)) ||
-        (member.email?.toLowerCase().includes(query))
+        (member.email?.toLowerCase().includes(query)) ||
+        (member.id.toLowerCase().includes(query))
       );
     }
 
@@ -905,7 +906,7 @@ const Settings = () => {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   type="text"
-                  placeholder="Buscar por nome ou e-mail..."
+                  placeholder="Buscar por nome, e-mail ou ID..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
