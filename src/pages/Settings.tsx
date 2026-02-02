@@ -66,6 +66,8 @@ interface Profile {
   full_name: string | null;
   role: string | null;
   company_id: string | null;
+  user_id?: string;
+  email?: string;
   company?: {
     name: string;
   } | null;
@@ -294,13 +296,12 @@ const Settings = () => {
   const getFilteredTeamMembers = () => {
     let filtered = teamMembers;
 
-    // Filter by search query (name, company name, or ID)
+    // Filter by search query (name or email)
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(member => 
         (member.full_name?.toLowerCase().includes(query)) ||
-        (member.company?.name?.toLowerCase().includes(query)) ||
-        (member.id.toLowerCase().includes(query))
+        (member.email?.toLowerCase().includes(query))
       );
     }
 
@@ -904,7 +905,7 @@ const Settings = () => {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   type="text"
-                  placeholder="Buscar por nome, empresa ou ID..."
+                  placeholder="Buscar por nome ou e-mail..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -941,6 +942,7 @@ const Settings = () => {
                     <div>
                       <p className="font-medium">{member.full_name || "Sem nome"}</p>
                       <p className="text-sm text-muted-foreground">
+                        {member.email && <span>{member.email} • </span>}
                         {member.role || "Sem role"} • {member.company?.name || "Sem Unidade"}
                       </p>
                     </div>
