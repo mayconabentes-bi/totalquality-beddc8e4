@@ -13,8 +13,9 @@ O modal de cadastro agora contém uma nova seção logo após "Contatos" com os 
 │                                                          │
 │  ┌─────────────────────────┐  ┌──────────────────────┐ │
 │  │ Código do Cliente       │  │ Data de Registro     │ │
-│  │ TQ-101 [DESABILITADO]   │  │ [2026-02-02]         │ │
-│  │ Gerado automaticamente  │  └──────────────────────┘ │
+│  │ (será gerado            │  │ [2026-02-02]         │ │
+│  │  automaticamente)       │  └──────────────────────┘ │
+│  │ [DESABILITADO]          │                           │
 │  └─────────────────────────┘                           │
 │                                                          │
 │  ┌───────────────────────────────────────────────────┐  │
@@ -67,8 +68,9 @@ O código do cliente (TQ-101) aparece em destaque (cor primária, negrito) antes
          │
          ▼
 ┌──────────────────────────────────────┐
-│  Sistema gera automaticamente:       │
-│  - Código: TQ-101 (próximo disponível)│
+│  Modal abre com valores padrão:      │
+│  - Código: (será gerado              │
+│            automaticamente)          │
 │  - Data Registro: 2026-02-02 (hoje)  │
 └────────┬─────────────────────────────┘
          │
@@ -87,8 +89,10 @@ O código do cliente (TQ-101) aparece em destaque (cor primária, negrito) antes
          │
          ▼
 ┌──────────────────────────────────────┐
-│  Empresa salva no banco com:         │
+│  Banco de dados gera código          │
+│  automaticamente via trigger:        │
 │  - client_code: "TQ-101"             │
+│  E salva outros campos:              │
 │  - client_since: "2026-02-02"        │
 │  - contract_end: "2027-02-02"        │
 │  - notes: "Unidade modelo..."        │
@@ -107,8 +111,9 @@ O código do cliente (TQ-101) aparece em destaque (cor primária, negrito) antes
 - **Tipo**: TEXT UNIQUE
 - **Formato**: TQ-XXX (ex: TQ-101, TQ-102)
 - **Geração**: Automática via trigger do banco de dados
-- **Interface**: Campo desabilitado, apenas leitura
+- **Interface**: Campo desabilitado com placeholder "(será gerado automaticamente)"
 - **Aparência**: Fundo cinza claro (bg-muted), cursor-not-allowed
+- **Importante**: O código é gerado pelo banco de dados no momento da inserção, evitando race conditions
 
 ### 2. Data de Registro (client_since)
 - **Tipo**: DATE
