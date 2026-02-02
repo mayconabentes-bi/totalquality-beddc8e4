@@ -59,7 +59,7 @@ const ProtectedRoute = ({ children, allowedRoles, requiredModule }: ProtectedRou
               // Check if user is approved/homologated
               toast.error("Acesso negado. Aguardando homologação do usuário.");
               if (isMounted) setAuthorized(false);
-            } else if (allowedRoles && !allowedRoles.includes(profile.role as any)) {
+            } else if (allowedRoles && !allowedRoles.includes(profile.role as typeof allowedRoles[number])) {
               toast.error("Acesso negado para esta modalidade.");
               if (isMounted) setAuthorized(false);
             } else if (requiredModule) {
