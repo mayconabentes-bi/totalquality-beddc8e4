@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
-import { 
+import {
   CheckCircle, 
   LogOut, 
   ArrowLeft,
@@ -37,7 +37,8 @@ import {
   LineChart,
   UserPlus,
   Users as UsersIcon,
-  Key
+  Key,
+  Search
 } from "lucide-react";
 import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
@@ -65,6 +66,9 @@ interface Profile {
   full_name: string | null;
   role: string | null;
   company_id: string | null;
+  company?: {
+    name: string;
+  } | null;
 }
 
 interface MarketIntelligence {
@@ -119,6 +123,8 @@ const Settings = () => {
   // User management state
   const [userDialogOpen, setUserDialogOpen] = useState(false);
   const [teamMembers, setTeamMembers] = useState<Profile[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [newUserForm, setNewUserForm] = useState({
     email: "",
     password: "",
@@ -215,11 +221,21 @@ const Settings = () => {
           
           // Fetch team members for master and proprietario roles
           if (profileData.role === 'master' || profileData.role === 'proprietario') {
-            const { data: teamData } = await supabase
+            // Build query with company info
+            let teamQuery = supabase
               .from("profiles")
-              .select("*")
-              .eq("company_id", profileData.company_id)
-              .order("name");
+              .select(`
+                *,
+                company:companies(name)
+              `);
+            
+            // If user is master, fetch ALL profiles (global visibility)
+            // Otherwise, filter by company_id
+            if (profileData.role !== 'master' && profileData.company_id) {
+              teamQuery = teamQuery.eq("company_id", profileData.company_id);
+            }
+            
+            const { data: teamData } = await teamQuery.order("full_name");
 
             if (teamData) {
               setTeamMembers(teamData);
@@ -235,14 +251,24 @@ const Settings = () => {
   };
 
   const fetchTeamMembers = async () => {
-    if (!profile?.company_id) return;
+    if (!profile) return;
     
     try {
-      const { data, error } = await supabase
+      // Build query with company info
+      let query = supabase
         .from("profiles")
-        .select("*")
-        .eq("company_id", profile.company_id)
-        .order("name");
+        .select(`
+          *,
+          company:companies(name)
+        `);
+      
+      // If user is master, fetch ALL profiles (global visibility)
+      // Otherwise, filter by company_id
+      if (profile.role !== 'master' && profile.company_id) {
+        query = query.eq("company_id", profile.company_id);
+      }
+      
+      const { data, error } = await query.order("full_name");
 
       if (!error && data) {
         setTeamMembers(data);
@@ -250,6 +276,42 @@ const Settings = () => {
     } catch (error) {
       console.error("Error fetching team members:", error);
     }
+  };
+
+  // Helper function to categorize roles
+  const getRoleCategory = (role: string | null): string => {
+    if (!role) return "other";
+    
+    if (role === "master") return "master";
+    if (role === "proprietario") return "proprietario";
+    if (["auditor", "total_quality_iso"].includes(role)) return "auditoria";
+    if (["secretaria", "treinador", "recepcionista", "manutencao", "estacionamento"].includes(role)) return "operacional";
+    
+    return "other";
+  };
+
+  // Filter team members based on search and category
+  const getFilteredTeamMembers = () => {
+    let filtered = teamMembers;
+
+    // Filter by search query (name, company name, or ID)
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(member => 
+        (member.full_name?.toLowerCase().includes(query)) ||
+        (member.company?.name?.toLowerCase().includes(query)) ||
+        (member.id.toLowerCase().includes(query))
+      );
+    }
+
+    // Filter by category
+    if (selectedCategory !== "all") {
+      filtered = filtered.filter(member => 
+        getRoleCategory(member.role) === selectedCategory
+      );
+    }
+
+    return filtered;
   };
 
   const handleCreateUser = async () => {
@@ -836,9 +898,34 @@ const Settings = () => {
               </div>
             </div>
 
+            {/* Search Bar */}
+            <div className="mb-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Buscar por nome, empresa ou ID..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            {/* Category Filter Tabs */}
+            <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="mb-4">
+              <TabsList className="grid w-full grid-cols-5">
+                <TabsTrigger value="all">Todos</TabsTrigger>
+                <TabsTrigger value="master">Master</TabsTrigger>
+                <TabsTrigger value="proprietario">Proprietário</TabsTrigger>
+                <TabsTrigger value="operacional">Operacional</TabsTrigger>
+                <TabsTrigger value="auditoria">Auditoria</TabsTrigger>
+              </TabsList>
+            </Tabs>
+
             {/* Team Members List */}
             <div className="space-y-3">
-              {teamMembers.map((member) => (
+              {getFilteredTeamMembers().map((member) => (
                 <div 
                   key={member.id}
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
@@ -854,7 +941,7 @@ const Settings = () => {
                     <div>
                       <p className="font-medium">{member.full_name || "Sem nome"}</p>
                       <p className="text-sm text-muted-foreground">
-                        {member.role || "Sem role"} • ID: {member.id.substring(0, 8)}...
+                        {member.role || "Sem role"} • {member.company?.name || "Sem Unidade"}
                       </p>
                     </div>
                   </div>
@@ -863,15 +950,19 @@ const Settings = () => {
                     member.role === 'proprietario' ? 'bg-blue-100 text-blue-800' :
                     member.role === 'secretaria' ? 'bg-green-100 text-green-800' :
                     member.role === 'treinador' ? 'bg-orange-100 text-orange-800' :
+                    member.role === 'auditor' ? 'bg-red-100 text-red-800' :
+                    member.role === 'total_quality_iso' ? 'bg-yellow-100 text-yellow-800' :
                     'bg-gray-100 text-gray-800'
                   }`}>
                     {member.role}
                   </span>
                 </div>
               ))}
-              {teamMembers.length === 0 && (
+              {getFilteredTeamMembers().length === 0 && (
                 <p className="text-center text-muted-foreground py-8">
-                  Nenhum membro da equipe encontrado
+                  {searchQuery || selectedCategory !== "all" 
+                    ? "Nenhum usuário encontrado com os filtros selecionados" 
+                    : "Nenhum membro da equipe encontrado"}
                 </p>
               )}
             </div>
