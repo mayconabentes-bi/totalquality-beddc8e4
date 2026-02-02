@@ -3,20 +3,21 @@ import { Navigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+type AllowedRole = 
+  | "auditor" 
+  | "empresa" 
+  | "total_quality_iso" 
+  | "master"
+  | "proprietario"
+  | "secretaria"
+  | "treinador"
+  | "recepcionista"
+  | "manutencao"
+  | "estacionamento";
+
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: (
-    | "auditor" 
-    | "empresa" 
-    | "total_quality_iso" 
-    | "master"
-    | "proprietario"
-    | "secretaria"
-    | "treinador"
-    | "recepcionista"
-    | "manutencao"
-    | "estacionamento"
-  )[];
+  allowedRoles?: AllowedRole[];
   requiredModule?: "axioma_mercado" | "axioma_estatistica" | "gestao_riscos" | "nps" | "manutencao";
 }
 
@@ -59,7 +60,7 @@ const ProtectedRoute = ({ children, allowedRoles, requiredModule }: ProtectedRou
               // Check if user is approved/homologated
               toast.error("Acesso negado. Aguardando homologação do usuário.");
               if (isMounted) setAuthorized(false);
-            } else if (allowedRoles && !allowedRoles.includes(profile.role as typeof allowedRoles[number])) {
+            } else if (allowedRoles && !allowedRoles.includes(profile.role as AllowedRole)) {
               toast.error("Acesso negado para esta modalidade.");
               if (isMounted) setAuthorized(false);
             } else if (requiredModule) {

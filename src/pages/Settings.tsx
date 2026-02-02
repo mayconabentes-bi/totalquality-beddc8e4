@@ -605,6 +605,13 @@ const Settings = () => {
       return;
     }
 
+    // Validate that a company is selected
+    const targetCompanyId = accessConfig.delegated_company_id || profile?.company_id;
+    if (!targetCompanyId) {
+      toast.error("Selecione uma empresa para delegação");
+      return;
+    }
+
     try {
       // Update all selected users with the configured access
       const updates = selectedUserIds.map(userId => 
@@ -613,7 +620,7 @@ const Settings = () => {
           .update({
             active_modules: accessConfig.modules,
             user_permissions: accessConfig.permissions,
-            company_id: accessConfig.delegated_company_id || profile?.company_id
+            company_id: targetCompanyId
           })
           .eq("id", userId)
       );
