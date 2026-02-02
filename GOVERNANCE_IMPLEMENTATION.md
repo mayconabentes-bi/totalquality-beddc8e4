@@ -26,7 +26,7 @@ Adicionadas as seguintes colunas à tabela `companies`:
 
 **Opção 1 - Via Dashboard do Supabase:**
 1. Acesse o Dashboard do Supabase: https://app.supabase.com
-2. Selecione seu projeto: `oporfnvpcxcblyosrluj`
+2. Selecione seu projeto
 3. Vá em "SQL Editor"
 4. Copie e cole o conteúdo do arquivo `supabase/migrations/20260202001300_add_governance_fields.sql`
 5. Execute a query
