@@ -26,6 +26,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { 
   CheckCircle, 
   LogOut, 
@@ -34,7 +36,8 @@ import {
   Brain,
   LineChart,
   UserPlus,
-  Users as UsersIcon
+  Users as UsersIcon,
+  Key
 } from "lucide-react";
 import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
@@ -143,6 +146,25 @@ const Settings = () => {
     client_since: "",
     contract_end: "",
     notes: ""
+  });
+
+  // Access control modal state
+  const [accessModalOpen, setAccessModalOpen] = useState(false);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [accessConfig, setAccessConfig] = useState({
+    modules: {
+      axioma_mercado: false,
+      axioma_estatistica: false,
+      gestao_riscos: false,
+      nps: false,
+      manutencao: false
+    },
+    permissions: {
+      pode_editar: false,
+      pode_deletar: false,
+      pode_exportar: false
+    },
+    delegated_company_id: ""
   });
 
   useEffect(() => {
@@ -542,6 +564,81 @@ const Settings = () => {
     }
   };
 
+  // Access control handlers
+  const handleToggleUserSelection = (userId: string) => {
+    setSelectedUserIds(prev => 
+      prev.includes(userId) 
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const handleOpenAccessModal = () => {
+    if (selectedUserIds.length === 0) {
+      toast.error("Selecione pelo menos um usuário");
+      return;
+    }
+    
+    // Reset config
+    setAccessConfig({
+      modules: {
+        axioma_mercado: false,
+        axioma_estatistica: false,
+        gestao_riscos: false,
+        nps: false,
+        manutencao: false
+      },
+      permissions: {
+        pode_editar: false,
+        pode_deletar: false,
+        pode_exportar: false
+      },
+      delegated_company_id: profile?.company_id || ""
+    });
+    
+    setAccessModalOpen(true);
+  };
+
+  const handleSaveAccessControl = async () => {
+    if (selectedUserIds.length === 0) {
+      toast.error("Nenhum usuário selecionado");
+      return;
+    }
+
+    // Validate that a company is selected
+    const targetCompanyId = accessConfig.delegated_company_id || profile?.company_id;
+    if (!targetCompanyId) {
+      toast.error("Selecione uma empresa para delegação");
+      return;
+    }
+
+    try {
+      // Update all selected users with the configured access
+      const updates = selectedUserIds.map(userId => 
+        supabase
+          .from("profiles")
+          .update({
+            active_modules: accessConfig.modules,
+            user_permissions: accessConfig.permissions,
+            company_id: targetCompanyId
+          })
+          .eq("id", userId)
+      );
+
+      await Promise.all(updates);
+
+      toast.success(`Acessos configurados para ${selectedUserIds.length} usuário(s)`);
+      setAccessModalOpen(false);
+      setSelectedUserIds([]);
+      
+      // Refresh team members
+      fetchTeamMembers();
+    } catch (error) {
+      console.error("Error updating access control:", error);
+      toast.error("Erro ao configurar acessos");
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -717,10 +814,26 @@ const Settings = () => {
                   Gerencie os membros da sua equipe e suas permissões
                 </p>
               </div>
-              <Button onClick={() => setUserDialogOpen(true)} className="gap-2">
-                <UserPlus className="w-4 h-4" />
-                Novo Usuário
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={handleOpenAccessModal} 
+                  className="gap-2"
+                  variant={selectedUserIds.length > 0 ? "default" : "secondary"}
+                  disabled={selectedUserIds.length === 0}
+                >
+                  <Key className="w-4 h-4" />
+                  Configurar Acessos e Delegação
+                  {selectedUserIds.length > 0 && (
+                    <span className="ml-1 px-2 py-0.5 bg-primary-foreground text-primary rounded-full text-xs">
+                      {selectedUserIds.length}
+                    </span>
+                  )}
+                </Button>
+                <Button onClick={() => setUserDialogOpen(true)} className="gap-2" variant="outline">
+                  <UserPlus className="w-4 h-4" />
+                  Novo Usuário
+                </Button>
+              </div>
             </div>
 
             {/* Team Members List */}
@@ -731,6 +844,10 @@ const Settings = () => {
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex items-center gap-3">
+                    <Checkbox 
+                      checked={selectedUserIds.includes(member.id)}
+                      onCheckedChange={() => handleToggleUserSelection(member.id)}
+                    />
                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                       <UsersIcon className="w-5 h-5 text-primary" />
                     </div>
@@ -1212,6 +1329,263 @@ const Settings = () => {
               </Button>
               <Button onClick={handleCreateCompany}>
                 Cadastrar Empresa
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Access Control Modal */}
+        <Dialog open={accessModalOpen} onOpenChange={setAccessModalOpen}>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Configurar Acessos e Delegação</DialogTitle>
+              <DialogDescription>
+                Configure os módulos ativos, permissões e empresa delegada para {selectedUserIds.length} usuário(s) selecionado(s)
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6 py-4">
+              {/* Block 1: Plano Contratado - Módulos */}
+              <div className="space-y-4">
+                <div className="border-b pb-2">
+                  <h3 className="font-semibold text-foreground">
+                    Bloco 1: Plano Contratado - Módulos
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Selecione quais módulos estarão disponíveis
+                  </p>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <Label htmlFor="axioma-mercado" className="font-medium">
+                        Axioma (Mercado)
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Inteligência de mercado e análises
+                      </p>
+                    </div>
+                    <Switch
+                      id="axioma-mercado"
+                      checked={accessConfig.modules.axioma_mercado}
+                      onCheckedChange={(checked) => 
+                        setAccessConfig(prev => ({
+                          ...prev,
+                          modules: { ...prev.modules, axioma_mercado: checked }
+                        }))
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <Label htmlFor="axioma-estatistica" className="font-medium">
+                        Axioma (Estatística)
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Estudos estatísticos e indicadores
+                      </p>
+                    </div>
+                    <Switch
+                      id="axioma-estatistica"
+                      checked={accessConfig.modules.axioma_estatistica}
+                      onCheckedChange={(checked) => 
+                        setAccessConfig(prev => ({
+                          ...prev,
+                          modules: { ...prev.modules, axioma_estatistica: checked }
+                        }))
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <Label htmlFor="gestao-riscos" className="font-medium">
+                        Gestão de Riscos
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Matriz de riscos e mitigação
+                      </p>
+                    </div>
+                    <Switch
+                      id="gestao-riscos"
+                      checked={accessConfig.modules.gestao_riscos}
+                      onCheckedChange={(checked) => 
+                        setAccessConfig(prev => ({
+                          ...prev,
+                          modules: { ...prev.modules, gestao_riscos: checked }
+                        }))
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <Label htmlFor="nps" className="font-medium">
+                        NPS
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Net Promoter Score e feedbacks
+                      </p>
+                    </div>
+                    <Switch
+                      id="nps"
+                      checked={accessConfig.modules.nps}
+                      onCheckedChange={(checked) => 
+                        setAccessConfig(prev => ({
+                          ...prev,
+                          modules: { ...prev.modules, nps: checked }
+                        }))
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <Label htmlFor="manutencao" className="font-medium">
+                        Manutenção
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Gestão de ativos e manutenções
+                      </p>
+                    </div>
+                    <Switch
+                      id="manutencao"
+                      checked={accessConfig.modules.manutencao}
+                      onCheckedChange={(checked) => 
+                        setAccessConfig(prev => ({
+                          ...prev,
+                          modules: { ...prev.modules, manutencao: checked }
+                        }))
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Block 2: Permissões de Uso */}
+              <div className="space-y-4">
+                <div className="border-b pb-2">
+                  <h3 className="font-semibold text-foreground">
+                    Bloco 2: Permissões de Uso
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Defina o nível de acesso aos dados
+                  </p>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <Label htmlFor="pode-editar" className="font-medium">
+                        Pode Editar Dados
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Permite modificar informações
+                      </p>
+                    </div>
+                    <Switch
+                      id="pode-editar"
+                      checked={accessConfig.permissions.pode_editar}
+                      onCheckedChange={(checked) => 
+                        setAccessConfig(prev => ({
+                          ...prev,
+                          permissions: { ...prev.permissions, pode_editar: checked }
+                        }))
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <Label htmlFor="pode-deletar" className="font-medium">
+                        Pode Deletar Registros
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Permite excluir dados permanentemente
+                      </p>
+                    </div>
+                    <Switch
+                      id="pode-deletar"
+                      checked={accessConfig.permissions.pode_deletar}
+                      onCheckedChange={(checked) => 
+                        setAccessConfig(prev => ({
+                          ...prev,
+                          permissions: { ...prev.permissions, pode_deletar: checked }
+                        }))
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <Label htmlFor="pode-exportar" className="font-medium">
+                        Pode Exportar Relatórios
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Permite exportação de dados
+                      </p>
+                    </div>
+                    <Switch
+                      id="pode-exportar"
+                      checked={accessConfig.permissions.pode_exportar}
+                      onCheckedChange={(checked) => 
+                        setAccessConfig(prev => ({
+                          ...prev,
+                          permissions: { ...prev.permissions, pode_exportar: checked }
+                        }))
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Block 3: Delegação */}
+              <div className="space-y-4">
+                <div className="border-b pb-2">
+                  <h3 className="font-semibold text-foreground">
+                    Bloco 3: Delegação
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Escolha a empresa à qual vincular esses usuários
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="delegated-company">Empresa</Label>
+                  <Select
+                    value={accessConfig.delegated_company_id}
+                    onValueChange={(value) => 
+                      setAccessConfig(prev => ({ ...prev, delegated_company_id: value }))
+                    }
+                  >
+                    <SelectTrigger id="delegated-company">
+                      <SelectValue placeholder="Selecione uma empresa" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {profile?.role === 'master' ? (
+                        companies.map(comp => (
+                          <SelectItem key={comp.id} value={comp.id}>
+                            {comp.client_code ? `${comp.client_code} - ` : ''}{comp.razao_social || comp.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        company && (
+                          <SelectItem value={company.id}>
+                            {company.client_code ? `${company.client_code} - ` : ''}{company.razao_social || company.name}
+                          </SelectItem>
+                        )
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setAccessModalOpen(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleSaveAccessControl}>
+                Salvar Configurações
               </Button>
             </DialogFooter>
           </DialogContent>

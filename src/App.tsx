@@ -15,6 +15,7 @@ import Secretaria from "./pages/Secretaria";
 import Treinador from "./pages/Treinador";
 import Parking from "./pages/Parking";
 import NotFound from "./pages/NotFound";
+import UpgradePlan from "./pages/UpgradePlan";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -71,7 +72,7 @@ const App = () => (
           <Route 
             path="/riscos" 
             element={
-              <ProtectedRoute allowedRoles={['master', 'proprietario']}>
+              <ProtectedRoute allowedRoles={['master', 'proprietario']} requiredModule="gestao_riscos">
                 <Risks />
               </ProtectedRoute>
             } 
@@ -79,7 +80,7 @@ const App = () => (
           <Route 
             path="/manutencao" 
             element={
-              <ProtectedRoute allowedRoles={['master', 'proprietario', 'manutencao']}>
+              <ProtectedRoute allowedRoles={['master', 'proprietario', 'manutencao']} requiredModule="manutencao">
                 <Maintenance />
               </ProtectedRoute>
             } 
@@ -87,7 +88,7 @@ const App = () => (
           <Route 
             path="/nps" 
             element={
-              <ProtectedRoute allowedRoles={['master', 'proprietario', 'recepcionista']}>
+              <ProtectedRoute allowedRoles={['master', 'proprietario', 'recepcionista']} requiredModule="nps">
                 <NPS />
               </ProtectedRoute>
             } 
@@ -116,6 +117,7 @@ const App = () => (
               </ProtectedRoute>
             } 
           />
+          <Route path="/upgrade" element={<UpgradePlan />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
