@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -42,6 +42,12 @@ interface Company {
   id: string;
   name: string;
   cnpj: string | null;
+  razao_social?: string | null;
+  nome_fantasia?: string | null;
+  data_abertura?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  full_address?: unknown;
   market_intelligence: unknown;
   statistical_studies: unknown;
 }
@@ -68,7 +74,16 @@ interface StatisticalStudies {
   clv?: number;
   cac?: number;
   ebitda_projetado?: number;
+  capital_social?: number;
   [key: string]: number | undefined;
+}
+
+interface FullAddress {
+  cep?: string;
+  logradouro?: string;
+  numero?: string;
+  complemento?: string;
+  bairro?: string;
 }
 
 const Settings = () => {
@@ -101,6 +116,24 @@ const Settings = () => {
     password: "",
     name: "",
     role: ""
+  });
+
+  // Company registration state
+  const [companyDialogOpen, setCompanyDialogOpen] = useState(false);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [newCompanyForm, setNewCompanyForm] = useState({
+    cnpj: "",
+    razao_social: "",
+    nome_fantasia: "",
+    data_abertura: "",
+    cep: "",
+    logradouro: "",
+    numero: "",
+    complemento: "",
+    bairro: "",
+    capital_social: "",
+    phone: "",
+    email: ""
   });
 
   useEffect(() => {
@@ -227,6 +260,158 @@ const Settings = () => {
     await supabase.auth.signOut();
     toast.success("Logout realizado com sucesso!");
     navigate("/");
+  };
+
+  const fetchCompanies = useCallback(async () => {
+    if (!user || profile?.role !== 'master') return;
+    
+    try {
+      const { data, error } = await supabase
+        .from("companies")
+        .select("*")
+        .order("name");
+
+      if (!error && data) {
+        setCompanies(data);
+      }
+    } catch (error) {
+      console.error("Error fetching companies:", error);
+    }
+  }, [user, profile?.role]);
+
+  // Fetch companies on mount for master users
+  useEffect(() => {
+    if (user && profile?.role === 'master') {
+      fetchCompanies();
+    }
+  }, [user, profile?.role, fetchCompanies]);
+
+  const formatCNPJ = (value: string): string => {
+    // Remove non-digits
+    const digits = value.replace(/\D/g, '');
+    
+    // Apply CNPJ mask: XX.XXX.XXX/XXXX-XX
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 5) return `${digits.slice(0, 2)}.${digits.slice(2)}`;
+    if (digits.length <= 8) return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5)}`;
+    if (digits.length <= 12) return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`;
+    return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12, 14)}`;
+  };
+
+  const handleCNPJChange = (value: string) => {
+    const formatted = formatCNPJ(value);
+    setNewCompanyForm({ ...newCompanyForm, cnpj: formatted });
+  };
+
+  const validateCNPJ = (cnpj: string): boolean => {
+    // Remove non-digits
+    const digits = cnpj.replace(/\D/g, '');
+    return digits.length === 14;
+  };
+
+  const handleCapitalSocialChange = (value: string) => {
+    // Allow only numbers, dots, and commas
+    const sanitized = value.replace(/[^\d.,]/g, '');
+    setNewCompanyForm({ ...newCompanyForm, capital_social: sanitized });
+  };
+
+  const handleCreateCompany = async () => {
+    // Validate required fields
+    if (!newCompanyForm.cnpj || !newCompanyForm.razao_social) {
+      toast.error("CNPJ e Razão Social são obrigatórios");
+      return;
+    }
+
+    // Validate CNPJ has 14 digits
+    if (!validateCNPJ(newCompanyForm.cnpj)) {
+      toast.error("CNPJ deve ter exatamente 14 dígitos");
+      return;
+    }
+
+    if (!user) {
+      toast.error("Usuário não identificado");
+      return;
+    }
+
+    try {
+      // Prepare full_address JSONB
+      const fullAddress: FullAddress = {
+        cep: newCompanyForm.cep || undefined,
+        logradouro: newCompanyForm.logradouro || undefined,
+        numero: newCompanyForm.numero || undefined,
+        complemento: newCompanyForm.complemento || undefined,
+        bairro: newCompanyForm.bairro || undefined,
+      };
+
+      // Prepare statistical_studies JSONB with capital_social
+      const statisticalStudies: StatisticalStudies = {};
+      if (newCompanyForm.capital_social) {
+        // Parse Brazilian currency format (e.g., "1.000.000,00" or "1000000.00")
+        // Remove all dots (thousand separators), replace comma with dot (decimal separator)
+        let cleanValue = newCompanyForm.capital_social.trim();
+        // If contains both dot and comma, assume Brazilian format (dots for thousands, comma for decimal)
+        if (cleanValue.includes('.') && cleanValue.includes(',')) {
+          cleanValue = cleanValue.replace(/\./g, '').replace(',', '.');
+        } 
+        // If only comma, replace with dot
+        else if (cleanValue.includes(',')) {
+          cleanValue = cleanValue.replace(',', '.');
+        }
+        // Remove any remaining non-numeric characters except dot
+        cleanValue = cleanValue.replace(/[^\d.]/g, '');
+        
+        const capitalValue = parseFloat(cleanValue);
+        if (!isNaN(capitalValue) && capitalValue >= 0) {
+          statisticalStudies.capital_social = capitalValue;
+        }
+      }
+
+      // Insert company
+      const { data, error } = await supabase
+        .from("companies")
+        .insert({
+          user_id: user.id,
+          name: newCompanyForm.razao_social, // Use razao_social as name
+          cnpj: newCompanyForm.cnpj.replace(/\D/g, ''), // Store only digits
+          razao_social: newCompanyForm.razao_social,
+          nome_fantasia: newCompanyForm.nome_fantasia || null,
+          data_abertura: newCompanyForm.data_abertura || null,
+          email: newCompanyForm.email || null,
+          phone: newCompanyForm.phone || null,
+          full_address: fullAddress,
+          statistical_studies: statisticalStudies,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error creating company:", error);
+        toast.error("Erro ao criar empresa: " + error.message);
+      } else {
+        toast.success("Empresa criada com sucesso!");
+        setCompanyDialogOpen(false);
+        // Reset form
+        setNewCompanyForm({
+          cnpj: "",
+          razao_social: "",
+          nome_fantasia: "",
+          data_abertura: "",
+          cep: "",
+          logradouro: "",
+          numero: "",
+          complemento: "",
+          bairro: "",
+          capital_social: "",
+          phone: "",
+          email: ""
+        });
+        // Refresh companies list
+        fetchCompanies();
+      }
+    } catch (error) {
+      console.error("Error creating company:", error);
+      toast.error("Erro ao criar empresa");
+    }
   };
 
   const hasData = (jsonData: unknown): boolean => {
@@ -420,6 +605,57 @@ const Settings = () => {
             </div>
           </div>
         </div>
+
+        {/* Companies Management Section - Only for master role */}
+        {profile?.role === 'master' && (
+          <div className="bg-card rounded-xl border border-border/50 shadow-soft p-6 mb-6">
+            <div className="flex items-start justify-between mb-6">
+              <div>
+                <h2 className="font-display text-xl font-semibold text-foreground mb-2">
+                  Empresas Cadastradas
+                </h2>
+                <p className="text-muted-foreground">
+                  Gerencie as empresas clientes do sistema
+                </p>
+              </div>
+              <Button onClick={() => setCompanyDialogOpen(true)} className="gap-2 bg-gradient-to-r from-primary to-accent hover:opacity-90">
+                <UserPlus className="w-4 h-4" />
+                Novo Cliente
+              </Button>
+            </div>
+
+            {/* Companies List */}
+            <div className="space-y-3">
+              {companies.map((comp) => (
+                <div 
+                  key={comp.id}
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <CheckCircle className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{comp.razao_social || comp.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        CNPJ: {comp.cnpj ? formatCNPJ(comp.cnpj) : "—"}
+                        {comp.nome_fantasia && ` • ${comp.nome_fantasia}`}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    ID: {comp.id.substring(0, 8)}...
+                  </span>
+                </div>
+              ))}
+              {companies.length === 0 && (
+                <p className="text-center text-muted-foreground py-8">
+                  Nenhuma empresa cadastrada ainda
+                </p>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* User Management Section - Only for master and proprietario */}
         {(profile?.role === 'master' || profile?.role === 'proprietario') && (
@@ -705,6 +941,175 @@ const Settings = () => {
               </Button>
               <Button onClick={handleCreateUser}>
                 Criar Usuário
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Company Registration Dialog */}
+        <Dialog open={companyDialogOpen} onOpenChange={setCompanyDialogOpen}>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Cadastrar Nova Empresa</DialogTitle>
+              <DialogDescription>
+                Preencha os dados oficiais da Receita Federal do Brasil
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6">
+              {/* Identificação */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-foreground border-b pb-2">Identificação</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="company-cnpj">CNPJ *</Label>
+                    <Input
+                      id="company-cnpj"
+                      value={newCompanyForm.cnpj}
+                      onChange={(e) => handleCNPJChange(e.target.value)}
+                      placeholder="00.000.000/0000-00"
+                      maxLength={18}
+                    />
+                    {newCompanyForm.cnpj && !validateCNPJ(newCompanyForm.cnpj) && (
+                      <p className="text-sm text-red-500">CNPJ deve ter 14 dígitos</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="company-data-abertura">Data de Abertura</Label>
+                    <Input
+                      id="company-data-abertura"
+                      type="date"
+                      value={newCompanyForm.data_abertura}
+                      onChange={(e) => setNewCompanyForm({ ...newCompanyForm, data_abertura: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="company-razao-social">Razão Social *</Label>
+                  <Input
+                    id="company-razao-social"
+                    value={newCompanyForm.razao_social}
+                    onChange={(e) => setNewCompanyForm({ ...newCompanyForm, razao_social: e.target.value })}
+                    placeholder="Nome oficial da empresa"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="company-nome-fantasia">Nome Fantasia</Label>
+                  <Input
+                    id="company-nome-fantasia"
+                    value={newCompanyForm.nome_fantasia}
+                    onChange={(e) => setNewCompanyForm({ ...newCompanyForm, nome_fantasia: e.target.value })}
+                    placeholder="Nome comercial"
+                  />
+                </div>
+              </div>
+
+              {/* Localização */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-foreground border-b pb-2">Localização</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="company-cep">CEP</Label>
+                    <Input
+                      id="company-cep"
+                      value={newCompanyForm.cep}
+                      onChange={(e) => setNewCompanyForm({ ...newCompanyForm, cep: e.target.value })}
+                      placeholder="00000-000"
+                      maxLength={9}
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="company-logradouro">Logradouro</Label>
+                    <Input
+                      id="company-logradouro"
+                      value={newCompanyForm.logradouro}
+                      onChange={(e) => setNewCompanyForm({ ...newCompanyForm, logradouro: e.target.value })}
+                      placeholder="Rua, Avenida, etc."
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="company-numero">Número</Label>
+                    <Input
+                      id="company-numero"
+                      value={newCompanyForm.numero}
+                      onChange={(e) => setNewCompanyForm({ ...newCompanyForm, numero: e.target.value })}
+                      placeholder="123"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="company-complemento">Complemento</Label>
+                    <Input
+                      id="company-complemento"
+                      value={newCompanyForm.complemento}
+                      onChange={(e) => setNewCompanyForm({ ...newCompanyForm, complemento: e.target.value })}
+                      placeholder="Sala, Andar, etc."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="company-bairro">Bairro</Label>
+                    <Input
+                      id="company-bairro"
+                      value={newCompanyForm.bairro}
+                      onChange={(e) => setNewCompanyForm({ ...newCompanyForm, bairro: e.target.value })}
+                      placeholder="Nome do bairro"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Estatísticas */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-foreground border-b pb-2">Estatísticas</h3>
+                <div className="space-y-2">
+                  <Label htmlFor="company-capital-social">Capital Social (R$)</Label>
+                  <Input
+                    id="company-capital-social"
+                    type="text"
+                    value={newCompanyForm.capital_social}
+                    onChange={(e) => handleCapitalSocialChange(e.target.value)}
+                    placeholder="1000000.00 ou 1.000.000,00"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Aceita formato brasileiro (1.000.000,00) ou internacional (1000000.00)
+                  </p>
+                </div>
+              </div>
+
+              {/* Contatos */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-foreground border-b pb-2">Contatos</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="company-phone">Telefone</Label>
+                    <Input
+                      id="company-phone"
+                      value={newCompanyForm.phone}
+                      onChange={(e) => setNewCompanyForm({ ...newCompanyForm, phone: e.target.value })}
+                      placeholder="(00) 00000-0000"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="company-email">E-mail</Label>
+                    <Input
+                      id="company-email"
+                      type="email"
+                      value={newCompanyForm.email}
+                      onChange={(e) => setNewCompanyForm({ ...newCompanyForm, email: e.target.value })}
+                      placeholder="contato@empresa.com.br"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setCompanyDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleCreateCompany}>
+                Cadastrar Empresa
               </Button>
             </DialogFooter>
           </DialogContent>

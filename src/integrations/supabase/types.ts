@@ -18,11 +18,17 @@ export type Database = {
         Row: {
           cnpj: string | null
           created_at: string
+          data_abertura: string | null
+          email: string | null
+          full_address: Json | null
           id: string
           industry: string | null
+          logo_url: string | null
           market_intelligence: Json | null
           name: string
+          nome_fantasia: string | null
           phone: string | null
+          razao_social: string | null
           size: string | null
           statistical_studies: Json | null
           updated_at: string
@@ -31,11 +37,17 @@ export type Database = {
         Insert: {
           cnpj?: string | null
           created_at?: string
+          data_abertura?: string | null
+          email?: string | null
+          full_address?: Json | null
           id?: string
           industry?: string | null
+          logo_url?: string | null
           market_intelligence?: Json | null
           name: string
+          nome_fantasia?: string | null
           phone?: string | null
+          razao_social?: string | null
           size?: string | null
           statistical_studies?: Json | null
           updated_at?: string
@@ -44,11 +56,17 @@ export type Database = {
         Update: {
           cnpj?: string | null
           created_at?: string
+          data_abertura?: string | null
+          email?: string | null
+          full_address?: Json | null
           id?: string
           industry?: string | null
+          logo_url?: string | null
           market_intelligence?: Json | null
           name?: string
+          nome_fantasia?: string | null
           phone?: string | null
+          razao_social?: string | null
           size?: string | null
           statistical_studies?: Json | null
           updated_at?: string
