@@ -16,7 +16,10 @@ export type Database = {
     Tables: {
       companies: {
         Row: {
+          client_code: string | null
+          client_since: string | null
           cnpj: string | null
+          contract_end: string | null
           created_at: string
           data_abertura: string | null
           email: string | null
@@ -27,6 +30,7 @@ export type Database = {
           market_intelligence: Json | null
           name: string
           nome_fantasia: string | null
+          notes: string | null
           phone: string | null
           razao_social: string | null
           size: string | null
@@ -35,7 +39,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          client_code?: string | null
+          client_since?: string | null
           cnpj?: string | null
+          contract_end?: string | null
           created_at?: string
           data_abertura?: string | null
           email?: string | null
@@ -46,6 +53,7 @@ export type Database = {
           market_intelligence?: Json | null
           name: string
           nome_fantasia?: string | null
+          notes?: string | null
           phone?: string | null
           razao_social?: string | null
           size?: string | null
@@ -54,7 +62,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          client_code?: string | null
+          client_since?: string | null
           cnpj?: string | null
+          contract_end?: string | null
           created_at?: string
           data_abertura?: string | null
           email?: string | null
@@ -65,6 +76,7 @@ export type Database = {
           market_intelligence?: Json | null
           name?: string
           nome_fantasia?: string | null
+          notes?: string | null
           phone?: string | null
           razao_social?: string | null
           size?: string | null
