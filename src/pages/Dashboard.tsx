@@ -44,6 +44,13 @@ interface Profile {
   full_name: string | null;
   role: string | null;
   company_id: string | null;
+  active_modules?: {
+    axioma_mercado?: boolean;
+    axioma_estatistica?: boolean;
+    gestao_riscos?: boolean;
+    nps?: boolean;
+    manutencao?: boolean;
+  };
 }
 
 const Dashboard = () => {
@@ -114,6 +121,16 @@ const Dashboard = () => {
     await supabase.auth.signOut();
     toast.success("Logout realizado com sucesso!");
     navigate("/");
+  };
+
+  // Helper function to check if a module is active
+  const isModuleActive = (moduleName: string): boolean => {
+    // Master role always has access to all modules
+    if (profile?.role === 'master') return true;
+    
+    // Check if user has the module in their active_modules
+    const activeModules = profile?.active_modules || {};
+    return activeModules[moduleName as keyof typeof activeModules] === true;
   };
 
   if (loading) {
@@ -280,8 +297,8 @@ const Dashboard = () => {
                 items={["Perfil", "Usuários"]}
               />
             )}
-            {/* Gestão de Riscos - Master and proprietario can see */}
-            {(profile?.role === 'master' || profile?.role === 'proprietario') && (
+            {/* Gestão de Riscos - Master and proprietario can see + must have module active */}
+            {(profile?.role === 'master' || profile?.role === 'proprietario') && isModuleActive('gestao_riscos') && (
               <ModuleCard 
                 icon={ShieldAlert}
                 title="Gestão de Riscos"
@@ -290,8 +307,8 @@ const Dashboard = () => {
                 onClick={() => navigate("/riscos")}
               />
             )}
-            {/* Manutenção - Master, proprietario, and manutencao can see */}
-            {(profile?.role === 'master' || profile?.role === 'proprietario' || profile?.role === 'manutencao') && (
+            {/* Manutenção - Master, proprietario, and manutencao can see + must have module active */}
+            {(profile?.role === 'master' || profile?.role === 'proprietario' || profile?.role === 'manutencao') && isModuleActive('manutencao') && (
               <ModuleCard 
                 icon={Wrench}
                 title="Manutenção"
@@ -300,8 +317,8 @@ const Dashboard = () => {
                 onClick={() => navigate("/manutencao")}
               />
             )}
-            {/* Voz do Aluno (NPS) - Master, proprietario, and recepcionista can see */}
-            {(profile?.role === 'master' || profile?.role === 'proprietario' || profile?.role === 'recepcionista') && (
+            {/* Voz do Aluno (NPS) - Master, proprietario, and recepcionista can see + must have module active */}
+            {(profile?.role === 'master' || profile?.role === 'proprietario' || profile?.role === 'recepcionista') && isModuleActive('nps') && (
               <ModuleCard 
                 icon={MessageSquare}
                 title="Voz do Aluno"

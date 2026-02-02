@@ -17,9 +17,10 @@ interface ProtectedRouteProps {
     | "manutencao"
     | "estacionamento"
   )[];
+  requiredModule?: "axioma_mercado" | "axioma_estatistica" | "gestao_riscos" | "nps" | "manutencao";
 }
 
-const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
+const ProtectedRoute = ({ children, allowedRoles, requiredModule }: ProtectedRouteProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [authorized, setAuthorized] = useState(false);
   const [hasSession, setHasSession] = useState(false);
@@ -39,11 +40,11 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
           }
         } else {
           if (isMounted) setHasSession(true);
-          // Busca o profile apenas se houver restrição de role
-          if (allowedRoles) {
+          // Busca o profile apenas se houver restrição de role ou módulo
+          if (allowedRoles || requiredModule) {
             const { data: profile, error } = await supabase
               .from("profiles")
-              .select("role, status_homologacao")
+              .select("role, status_homologacao, active_modules")
               .eq("user_id", session.user.id)
               .single();
 
@@ -58,9 +59,18 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
               // Check if user is approved/homologated
               toast.error("Acesso negado. Aguardando homologação do usuário.");
               if (isMounted) setAuthorized(false);
-            } else if (!allowedRoles.includes(profile.role as any)) {
+            } else if (allowedRoles && !allowedRoles.includes(profile.role as any)) {
               toast.error("Acesso negado para esta modalidade.");
               if (isMounted) setAuthorized(false);
+            } else if (requiredModule) {
+              // Check if user has the required module active
+              const activeModules = profile.active_modules as Record<string, boolean> || {};
+              if (!activeModules[requiredModule]) {
+                toast.error("Módulo não contratado. Faça upgrade do seu plano.");
+                if (isMounted) setAuthorized(false);
+              } else {
+                if (isMounted) setAuthorized(true);
+              }
             } else {
               if (isMounted) setAuthorized(true);
             }
@@ -81,7 +91,7 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
 
     checkAccess();
     return () => { isMounted = false; };
-  }, [allowedRoles]);
+  }, [allowedRoles, requiredModule]);
 
   if (isLoading) {
     return (
@@ -97,6 +107,10 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
     // Se não tem sessão, redireciona para login
     if (!hasSession) {
       return <Navigate to="/auth" state={{ from: location }} replace />;
+    }
+    // Se tem sessão mas não tem permissão (módulo ou role), redireciona para upgrade
+    if (requiredModule) {
+      return <Navigate to="/upgrade" state={{ from: location }} replace />;
     }
     // Se tem sessão mas não tem role adequada, redireciona para dashboard
     return <Navigate to="/dashboard" state={{ from: location }} replace />;
